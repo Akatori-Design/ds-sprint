@@ -1,0 +1,1546 @@
+<meta charset="utf-8">
+<title>DS Sprint</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 28 28%27%3E%3Crect width=%2728%27 height=%2728%27 rx=%278%27 fill=%27%233d5ff0%27/%3E%3Cpath d=%27M11.5 8.5 17 14l-5.5 5.5%27 fill=%27none%27 stroke=%27%23fff%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+<meta name="description" content="A two-week, fixed-price sprint that sets up a production design system for startups: tokens, components, motion and AI agent rules.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@100..900&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a centred 1240px column. The hero is a rounded black stage where an AI chat builds an onboarding flow,
+   with the stats docked bottom-right in a lime panel. Sections below alternate open type with single framed demos. */
+
+/* Display face: TWK Everett (Weltkern) in its heavy cuts, which aren't here yet. Add the licensed Bold/Black/Super woff2 files to
+   assets/fonts and declare them with @font-face; until then Hanken Grotesk 800-900 stands in. */
+
+:root{
+  /* ground + neutral ink: white, near-black ink. --ink and friends point at these, and colour fields re-point them. */
+  --bg:#ffffff; --surface:#ffffff; --muted:#f0f0f0;
+  --n-ink:#121212; --n-ink-2:#3d3d3d; --n-ink-3:#6b6b6b;
+  --n-line:rgba(18,18,18,.16); --n-line-2:rgba(18,18,18,.07);
+  --ink:var(--n-ink); --ink-2:var(--n-ink-2); --ink-3:var(--n-ink-3); --line:var(--n-line); --line-2:var(--n-line-2);
+  /* fields: black and grey carry the page, lime highlights, blue acts, light blue is the calm tint */
+  --black:#121212; --on-black:#ffffff;
+  --grey:#f1f1f1; --on-grey:#121212;
+  --lime:#d3f56b; --on-lime:#121212;
+  --blue:#3d5ff0; --on-blue:#ffffff;
+  --sky:#d6e4ff; --on-sky:#121212;
+  /* accent for text and marks on the paper ground: timeline, checks */
+  --azure:#3d5ff0; --azure-ink:#ffffff; --pix:#6d88ff;
+  --success:#1d8657; --on-success:#ffffff; --danger:#cf3646;
+  --th-ledger:#0f6b5f; --th-bloom:#c03a2f; --th-on:#ffffff;
+  /* code sits on the black field */
+  --code-key:#9fbcff; --code-str:#d3f56b; --code-pun:#8c8c8c;
+
+  --font-display:"TWK Everett","Hanken Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-body:"Hanken Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --font-serif:ui-serif,Georgia,"Times New Roman",serif;
+
+  --ease-standard:cubic-bezier(.4,0,.2,1); --ease-enter:cubic-bezier(0,0,.2,1);
+  --ease-exit:cubic-bezier(.4,0,1,1); --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --dur-2:220ms; --dur-3:420ms; --dur-4:700ms;
+  --r-sm:10px; --r-md:16px; --r-lg:28px; --r-xl:40px;
+  --max:1240px; --wide:1440px;
+  interpolate-size:allow-keywords;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e0e0e; --surface:#1b1b1b; --muted:#272727;
+  --n-ink:#f5f5f5; --n-ink-2:#c2c2c2; --n-ink-3:#8f8f8f;
+  --n-line:rgba(245,245,245,.15); --n-line-2:rgba(245,245,245,.06);
+  --black:#1a1a1a; --grey:#232323; --on-grey:#f5f5f5;
+  --azure:#7d95ff; --azure-ink:#0e0e0e;
+  --success:#3fc088; --on-success:#06130d; --danger:#ff6b79;
+  --th-ledger:#33b5a1; --th-bloom:#ff7b6c; --th-on:#0e0e0e;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0e0e0e; --surface:#1b1b1b; --muted:#272727;
+  --n-ink:#f5f5f5; --n-ink-2:#c2c2c2; --n-ink-3:#8f8f8f;
+  --n-line:rgba(245,245,245,.15); --n-line-2:rgba(245,245,245,.06);
+  --black:#1a1a1a; --grey:#232323; --on-grey:#f5f5f5;
+  --azure:#7d95ff; --azure-ink:#0e0e0e;
+  --success:#3fc088; --on-success:#06130d; --danger:#ff6b79;
+  --th-ledger:#33b5a1; --th-bloom:#ff7b6c; --th-on:#0e0e0e;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--font-body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+code{font-family:var(--font-mono)}
+
+.page{padding-inline:clamp(16px,2.4vw,28px)}
+.inner{max-width:var(--max);margin-inline:auto}
+
+/* ---------- type ---------- */
+.eyebrow{font:500 12px/1.3 var(--font-mono);text-transform:uppercase;letter-spacing:.09em;color:var(--ink-2);margin:0 0 18px}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance}
+h1{font-weight:900;font-size:clamp(46px,7.4vw,112px);line-height:.88;letter-spacing:-.03em;text-transform:uppercase;max-width:11ch}
+h2{font-weight:800;font-size:clamp(34px,4.6vw,62px);line-height:.94;letter-spacing:-.025em;text-transform:uppercase}
+h3{font-weight:700;font-size:26px;line-height:1.1;letter-spacing:-.02em}
+.lede{font-size:clamp(17px,1.4vw,19px);line-height:1.5;color:var(--ink-2);max-width:44ch;margin:26px 0 0}
+
+/* ---------- colour fields ---------- */
+/* Flat, solid blocks of colour. Each field re-points the ink tokens at its own hue, so text, rules and buttons inside it match.
+   .surface puts a plain card with neutral ink back inside a field. */
+.fill-black{--fld:var(--black);--ink:var(--on-black)}
+.fill-grey{--fld:var(--grey);--ink:var(--on-grey)}
+.fill-lime{--fld:var(--lime);--ink:var(--on-lime)}
+.fill-blue{--fld:var(--blue);--ink:var(--on-blue)}
+.fill-sky{--fld:var(--sky);--ink:var(--on-sky)}
+.fill-black,.fill-grey,.fill-lime,.fill-blue,.fill-sky{background:var(--fld);color:var(--ink);
+  --ink-2:color-mix(in oklab,var(--ink) 80%,var(--fld));--ink-3:color-mix(in oklab,var(--ink) 64%,var(--fld));
+  --line:color-mix(in oklab,var(--ink) 22%,transparent);--line-2:color-mix(in oklab,var(--ink) 9%,transparent)}
+.surface{--fld:var(--surface);--ink:var(--n-ink);--ink-2:var(--n-ink-2);--ink-3:var(--n-ink-3);--line:var(--n-line);--line-2:var(--n-line-2);
+  background:var(--surface);color:var(--ink)}
+
+/* ---------- buttons ---------- */
+/* Fluid gradient: one continuous band of blues (deep cobalt, brand blue, a lighter blue; no black), three times wider than the
+   pill, flows slowly back and forth behind the label so the white label always reads; with reduced motion it simply holds still. */
+.btn{display:inline-flex;align-items:center;gap:12px;height:50px;padding:0 22px;border-radius:999px;border:1.5px solid transparent;
+  font:600 15px/1 var(--font-body);text-decoration:none;cursor:pointer;white-space:nowrap;
+  transition:transform var(--dur-2) var(--ease-spring),filter var(--dur-2) var(--ease-standard),box-shadow var(--dur-2) var(--ease-standard)}
+.btn:active{transform:scale(.96)}
+@media (prefers-reduced-motion:no-preference){.btn-primary,.btn-ghost{animation:flow 7s ease-in-out infinite alternate}}
+@keyframes flow{from{background-position:0 50%}to{background-position:100% 50%}}
+.btn-primary{color:var(--on-black);text-shadow:0 1px 2px rgba(0,0,0,.35);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);
+  background:linear-gradient(115deg,color-mix(in oklab,var(--blue) 85%,var(--black)),var(--blue) 28%,color-mix(in oklab,var(--blue) 78%,#fff) 50%,
+    var(--blue) 72%,color-mix(in oklab,var(--blue) 85%,var(--black))) 0 50% / 300% 100%}
+.btn-primary:hover{filter:brightness(1.1)}
+.btn-primary .tag{font:500 12px/1 var(--font-mono);padding:6px 9px;border-radius:999px;background:var(--lime);color:var(--on-lime);text-shadow:none}
+/* the secondary pill keeps its own fill and wears a lighter run of the same flow as its outline, so it never fades into a dark field */
+.btn-ghost{color:var(--ink);
+  background:linear-gradient(var(--fld,var(--bg)),var(--fld,var(--bg))) padding-box,
+    linear-gradient(115deg,color-mix(in oklab,var(--blue) 85%,var(--black)),var(--blue),color-mix(in oklab,var(--blue) 50%,#fff),var(--blue),color-mix(in oklab,var(--blue) 85%,var(--black))) border-box;
+  background-size:100% 100%,300% 100%}
+.btn-ghost:hover{box-shadow:inset 0 0 0 99px var(--line-2)}
+.btn-sm{height:40px;padding:0 16px;font-size:14px}
+.btn-lg{height:58px;padding:0 28px;font-size:16px}
+
+/* ---------- nav ---------- */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;max-width:var(--wide);margin:12px auto 0;height:60px;
+  display:flex;align-items:center;gap:20px;padding:0 10px 0 18px;border-radius:999px;border:1px solid transparent;
+  transition:background-color var(--dur-3) var(--ease-standard),border-color var(--dur-3) var(--ease-standard)}
+.nav.scrolled{background:var(--surface);border-color:var(--line)}
+/* DS Sprint logo: a blue tile with a forward chevron, then the name in Futura (on macOS and iOS; elsewhere the nearest geometric sans) */
+.brand{display:flex;align-items:center;gap:9px;font:600 21px/1 Futura,"Futura PT","Century Gothic","Avenir Next",var(--font-body);letter-spacing:-.01em;text-decoration:none;color:var(--ink)}
+.brand-mark{width:28px;height:28px;flex:none}
+.brand-mark rect{fill:var(--blue)}
+.brand-mark path{fill:none;stroke:var(--on-blue);stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;transition:transform var(--dur-3) var(--ease-spring)}
+.brand:hover .brand-mark path{transform:translateX(2px)}
+.nav nav{display:flex;gap:2px;margin-left:auto}
+.nav nav a{padding:8px 12px;border-radius:999px;color:var(--ink-2);text-decoration:none;font-size:14px;transition:color var(--dur-2) var(--ease-standard),background-color var(--dur-2) var(--ease-standard)}
+.nav nav a:hover{color:var(--ink);background:var(--line-2)}
+@media (max-width:860px){.nav nav{display:none}.nav .btn{margin-left:auto}}
+
+/* ---------- hero ---------- */
+.hero{--hp:clamp(22px,4.2vw,58px);position:relative;isolation:isolate;overflow:hidden;max-width:var(--wide);margin:12px auto 0;
+  border-radius:var(--r-xl);padding:var(--hp);min-height:820px;display:flex;flex-direction:column}
+.hero-copy{position:relative;z-index:2}
+.hero h1 .w{display:inline-block}
+.hero h1 .hl{padding:.03em .14em .02em;margin-inline:-.04em;border-radius:.16em;background:var(--lime);color:var(--black)}
+/* "Best for startups" sticker: sized in ems of the headline so it lands just past "AI-ENABLED" at every width */
+.stamp{position:absolute;z-index:3;top:-.32em;left:min(5.6em,calc(100% - 1.25em));width:1.45em;height:1.45em;font-size:clamp(46px,7.4vw,112px);
+  transform:rotate(-12deg);transition:transform .45s var(--ease-spring)}
+.stamp:hover{transform:rotate(0deg) scale(1.08)}
+.stamp svg{display:block;width:100%;height:100%;overflow:visible}
+.stamp-bg{fill:var(--blue)}
+.stamp text{font:500 10.5px var(--font-mono);letter-spacing:.12em;text-transform:uppercase;fill:var(--on-blue)}
+.stamp-core{fill:var(--lime)}
+.stamp-rocket{fill:none;stroke:var(--black);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media (prefers-reduced-motion:no-preference){
+  .stamp{animation:stamp-in .8s var(--ease-spring) .9s backwards}
+  .stamp-spin{transform-box:view-box;transform-origin:60px 60px;animation:stamp-spin 16s linear infinite}
+}
+/* phones: no room beside the first line, so the sticker gets its own corner above the headline */
+@media (max-width:620px){
+  .hero-copy{padding-top:66px}
+  .stamp{top:-4px;left:auto;right:-4px;width:1.35em;height:1.35em}
+}
+@keyframes stamp-in{from{opacity:0;transform:scale(.2) rotate(-140deg)}}
+@keyframes stamp-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:no-preference){
+  .hero h1 .w{animation:rise 1s var(--ease-enter) both;animation-delay:calc(var(--i) * 70ms + 100ms)}
+  .hero .lede,.hero .cta-row{animation:rise .9s var(--ease-enter) both;animation-delay:.55s}
+  .hero .cta-row{animation-delay:.68s}
+}
+@keyframes rise{from{opacity:0;transform:translateY(.4em)}}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
+
+/* AI demo: a chat prompt opens into a wireframe card, the onboarding screen's pieces fly in, the rest of the flow fans out behind it
+   and each card swipes away to the next, until the last one folds back into the chat input. Cards are a light product mock in both
+   themes, so they take fixed light/dark values from the palette rather than the field ink. --d is a card's depth in the stack.
+   The whole scene sits on a tilted 3D plane (.ob-scene) that leans toward the headline and follows the pointer. Cards recede in
+   real depth by --d, so the stack follows that angle; the swiped card flies toward the viewer, so depth keeps it in front. */
+.ai-demo{--cw:264px;--ch:356px;--c-bg:var(--on-black);--c-ink:var(--black);--c-ink-2:color-mix(in oklab,var(--black) 58%,var(--on-black));
+  --c-soft:color-mix(in oklab,var(--black) 5%,var(--on-black));--c-line:color-mix(in oklab,var(--black) 12%,var(--on-black));
+  --c-lime:color-mix(in oklab,var(--lime) 42%,var(--on-black));
+  --zoom:1.16;position:absolute;z-index:1;right:calc(var(--hp) + 2%);top:9%;width:380px;height:500px;perspective:1100px}
+.ai-demo.snap,.ai-demo.snap *{transition:none!important}
+.ob-scene{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(calc(9deg - var(--py,0) * 8deg)) rotateY(calc(-17deg + var(--px,0) * 12deg)) rotateZ(4deg) scale3d(var(--zoom),var(--zoom),var(--zoom));
+  transition:transform .9s var(--ease-enter)}
+.ob-float{position:absolute;inset:0;transform-style:preserve-3d}
+@media (prefers-reduced-motion:no-preference){.ob-float{animation:bob 6s ease-in-out infinite alternate}}
+@keyframes bob{to{transform:translateY(-10px) rotate(1.5deg)}}
+
+.ob{position:absolute;inset:56px 0 0;margin:auto;width:var(--cw);height:var(--ch);border-radius:26px;background:var(--c-bg);color:var(--c-ink);border:1.5px dashed transparent;
+  box-shadow:0 34px 60px -30px rgba(0,0,0,.75);
+  transform:translate3d(0,calc(var(--d,0) * -18px),calc(var(--d,0) * -50px));z-index:calc(10 - var(--d,0));
+  transition:transform .55s var(--ease-spring),width .42s var(--ease-standard),height .42s var(--ease-standard),border-radius .42s var(--ease-standard),
+    background-color .25s var(--ease-standard),border-color .25s var(--ease-standard),box-shadow .25s var(--ease-standard),opacity .3s var(--ease-standard)}
+.ob::after{content:"";position:absolute;inset:-1.5px;border-radius:inherit;background:#000;opacity:calc(var(--d,0) * .13);pointer-events:none;transition:opacity .4s var(--ease-standard)}
+.ob.tuck{opacity:0;transform:none}
+.ob.pill{width:min(100% - 16px,314px);height:60px;border-radius:30px}
+.ob.wire{background-color:transparent;border-color:var(--lime);box-shadow:none}
+/* the swiped card stays on top of the stack until it has flown off */
+.ob.gone{z-index:20;opacity:0;transform:translate3d(-150%,0,40px) rotate(-16deg);transition:transform .36s var(--ease-exit),opacity .3s var(--ease-exit) .06s}
+.ob-ui{position:absolute;inset:0;display:flex;flex-direction:column;padding:18px;transition:opacity .25s var(--ease-standard)}
+.ob.pill .ob-ui,.ob.blank .ob-ui{opacity:0}
+.ob .el{transition:none}
+.ob.scatter .el{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.4)}
+.ob.build .el{transition:transform .6s var(--ease-spring) calc(var(--k) * 45ms),opacity .2s var(--ease-standard) calc(var(--k) * 45ms)}
+
+/* screen chrome: back, progress, skip; then visual, title, line, primary button */
+.ob-top{display:flex;align-items:center;gap:10px;height:28px}
+.ob-back{width:28px;height:28px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--c-soft)}
+.ob-back::before{content:"";width:7px;height:7px;border-left:2px solid var(--c-ink);border-bottom:2px solid var(--c-ink);transform:translateX(1.5px) rotate(45deg)}
+.ob-back.off{visibility:hidden}
+.ob-prog{flex:1;display:flex;gap:4px}
+.ob-prog i{flex:1;height:4px;border-radius:2px;background:var(--c-line)}
+.ob-prog i.on{background:var(--blue)}
+.ob-skip{font:600 12px/1 var(--font-body);color:var(--c-ink-2)}
+.ob-vis{--v:var(--c-soft);position:relative;height:124px;margin-top:16px;border-radius:18px;background:var(--v);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.ob-t{margin:18px 0 0;font:800 21px/1.08 var(--font-display);letter-spacing:-.025em}
+.ob-s{margin:6px 0 0;font-size:13px;line-height:1.45;color:var(--c-ink-2)}
+.ob-btn{margin-top:auto;height:44px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:14px;background:var(--c-ink);color:var(--c-bg);font:600 14px/1 var(--font-body)}
+.ob-btn::after{content:"→";font-weight:500}
+
+/* screen visuals */
+.ob-app{width:60px;height:60px;display:grid;place-items:center;border-radius:18px;background:var(--blue);color:var(--on-blue);box-shadow:0 14px 26px -12px color-mix(in oklab,var(--blue) 80%,transparent)}
+.ob-app svg{width:26px;height:26px}
+.ob-tag{position:absolute;display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--c-bg);font:600 11px/1 var(--font-body);
+  box-shadow:0 8px 18px -8px rgba(0,0,0,.3)}
+.ob-tag i{width:10px;height:10px;border-radius:50%;background:var(--lime);box-shadow:inset 0 0 0 2px var(--c-ink)}
+.ob-tag-a{left:14px;top:16px}
+.ob-tag-b{right:14px;bottom:16px;background:var(--lime)}
+.ob-dot{position:absolute;right:34px;top:24px;width:12px;height:12px;border-radius:50%;background:var(--c-bg)}
+.ob-prof{align-items:stretch;padding:0 14px}
+.ob-field{display:flex;align-items:center;gap:10px;height:44px;padding:0 10px 0 7px;border-radius:12px;background:var(--c-bg);box-shadow:0 0 0 2px var(--blue)}
+.ob-av{width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--lime);font:700 11px/1 var(--font-body)}
+.ob-in{font:500 13px/1 var(--font-body)}
+.ob-in::after{content:"";display:inline-block;width:1.5px;height:15px;margin-left:2px;vertical-align:-3px;background:var(--blue)}
+.ob-roles{display:flex;gap:6px}
+.ob-roles span{height:26px;display:inline-flex;align-items:center;padding:0 11px;border-radius:999px;background:var(--c-bg);box-shadow:inset 0 0 0 1px var(--c-line);font:600 11px/1 var(--font-body)}
+.ob-roles .on{background:var(--c-ink);color:var(--c-bg);box-shadow:none}
+.avs{display:flex}
+.avs i{width:36px;height:36px;margin-left:-9px;display:grid;place-items:center;border-radius:50%;background:var(--c);color:var(--ci,var(--c-ink));font:700 12px/1 var(--font-body);font-style:normal;box-shadow:0 0 0 3px var(--v)}
+.avs i:first-child{margin-left:0}
+.ob-invite{display:flex;align-items:center;gap:8px;width:calc(100% - 28px);height:38px;padding:0 5px 0 12px;border-radius:12px;background:var(--c-bg);box-shadow:0 8px 18px -10px rgba(0,0,0,.3)}
+.ob-invite b{flex:1;min-width:0;font:500 12px/1 var(--font-mono)}
+.ob-invite span{height:28px;display:grid;place-items:center;padding:0 11px;border-radius:9px;background:var(--blue);color:var(--on-blue);font:600 11px/1 var(--font-body)}
+.themes{display:flex;gap:10px}
+.themes i{position:relative;width:56px;height:80px;border-radius:12px;background:var(--c);color:var(--ci);box-shadow:0 0 0 1px var(--c-line)}
+.themes i::before{content:"";position:absolute;left:8px;top:10px;width:22px;height:6px;border-radius:3px;background:currentColor;opacity:.5}
+.themes i::after{content:"";position:absolute;left:8px;right:8px;bottom:8px;height:12px;border-radius:6px;background:currentColor;opacity:.5}
+.themes .on{box-shadow:0 0 0 2px var(--blue)}
+.themes b{position:absolute;right:-7px;top:-7px;width:18px;height:18px;display:grid;place-items:center;border-radius:50%;background:var(--blue)}
+.themes b::before{content:"";width:7px;height:4px;border-left:2px solid var(--on-blue);border-bottom:2px solid var(--on-blue);transform:translateY(-1px) rotate(-45deg)}
+.seal{width:88px;height:88px;overflow:visible}
+.seal-bg{fill:var(--lime);transform-box:fill-box;transform-origin:center;transform:scale(0) rotate(-120deg);transition:transform .7s var(--ease-spring)}
+.seal-check{fill:none;stroke:var(--black);stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:70;stroke-dashoffset:70;transition:stroke-dashoffset .4s var(--ease-enter) .45s}
+.seal-rays > *{opacity:0;transform-box:view-box;transform-origin:60px 60px}
+.seal-rays line{stroke:var(--lime);stroke-width:5;stroke-linecap:round}
+.seal-rays circle{fill:var(--blue)}
+.ob.sealed .seal-bg{transform:none}
+.ob.sealed .seal-check{stroke-dashoffset:0}
+.ob.sealed .seal-rays > *{animation:ray .8s var(--ease-enter) .55s both}
+@keyframes ray{0%{opacity:1;transform:scale(.72)}100%{opacity:0;transform:scale(1.2)}}
+
+/* the chat input sits where the pill-shaped card is, so the card reads as turning into it */
+.ob-chat{position:absolute;inset:56px 0 0;margin:auto;z-index:30;width:min(100% - 16px,314px);transform:translateZ(2px);height:60px;display:flex;align-items:center;gap:10px;padding:0 9px 0 10px;
+  color:var(--c-ink);opacity:0;pointer-events:none;transition:opacity .2s var(--ease-standard)}
+.ai-demo.chatting .ob-chat{opacity:1}
+.ob-spark{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:50%;background:color-mix(in oklab,var(--blue) 12%,var(--on-black));color:var(--blue)}
+.ob-spark svg{width:16px;height:16px}
+.ob-typed{flex:1;min-width:0;overflow:hidden;white-space:nowrap;font:500 14px/1 var(--font-body)}
+.ob-typed:empty::before{content:"Ask AI to design…";color:var(--c-ink-2)}
+.ob-typed.typing::after{content:"";display:inline-block;width:2px;height:1.05em;margin-left:2px;vertical-align:-.15em;background:var(--blue);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.ob-send{width:42px;height:42px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--black);color:var(--on-black);transition:transform .2s var(--ease-spring)}
+.ob-send.press{transform:scale(.84)}
+
+/* stats: their own lime band under the hero, three equal columns, each arrow pinned to the bottom so the columns line up */
+.stats-band{max-width:var(--wide);margin:12px auto 0;padding:clamp(28px,4vw,52px) var(--hp,clamp(22px,4.2vw,58px));border-radius:var(--r-xl)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.stat{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:28px;min-width:0;padding:0 24px;border-left:1.5px solid var(--line)}
+.stat:first-child{padding-left:0;border-left:0}
+.stat-txt{display:grid;gap:4px}
+.stat b{font:800 clamp(44px,5.2vw,78px)/1 var(--font-display);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.stat span{font-size:20px;font-weight:700;letter-spacing:-.01em;margin-top:12px}
+.round{width:46px;height:46px;flex:none;border-radius:50%;display:grid;place-items:center;text-decoration:none;
+  background:var(--ink);color:var(--fld);
+  transition:transform var(--dur-3) var(--ease-spring),background-color var(--dur-2) var(--ease-standard)}
+.round svg{transition:transform var(--dur-3) var(--ease-spring)}
+.round:hover{transform:translateY(-2px)}
+.round:hover svg{transform:translateX(3px)}
+
+@media (max-width:980px){
+  .hero{min-height:0}
+  .ai-demo{--zoom:1;position:relative;right:auto;top:auto;order:1;margin:36px auto 0;width:min(330px,100%);height:460px}
+  .hero-copy{margin-bottom:0}
+  .trust{order:2;margin-top:36px}
+}
+@media (max-width:620px){
+  .stats{grid-template-columns:1fr}
+  .stat{flex-direction:row;align-items:center;gap:16px;padding:18px 0;border-left:0;border-top:1px solid var(--line)}
+  .stat:first-child{border-top:0;padding-top:0}
+  .stat:last-child{padding-bottom:0}
+  .stat b{font-size:46px}
+  .stat span{margin-top:6px}
+}
+
+/* ---------- 5× faster ---------- */
+/* The same feature through two workflows on one 10-day axis. JS plays --t from 0 to 1; every segment derives its own fill (--p)
+   from where it sits on the axis (--a to --b, --w = 1 / (b - a)), so the lanes fill in real time and line up with the playhead. */
+#faster h2 em{font:italic 400 1.1em/1 var(--font-serif);text-transform:none;letter-spacing:-.03em}
+.race-board{--t:0;display:grid;gap:clamp(30px,3.5vw,44px)}
+.lane-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;margin-bottom:14px}
+.lane-head h3{font-size:18px;letter-spacing:-.015em}
+.lane-flow{order:3;flex-basis:100%;margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px;color:var(--ink-3)}
+.key{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)}
+.key::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--kc)}
+.lane-count{margin:0 0 0 auto;font:500 12px/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.lane-count b{margin-right:6px;font:800 24px/1 var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.lane-track{position:relative;height:52px;margin:0;padding:0;list-style:none}
+.lane:not(.lane-sys) .lane-track{margin-bottom:24px}
+.lane-track::after{content:"";position:absolute;z-index:3;top:-8px;bottom:-8px;left:calc(var(--t) * 100%);width:2px;margin-left:-1px;border-radius:1px;background:var(--ink);transition:opacity .4s var(--ease-standard)}
+.race.done .lane-track::after{opacity:0}
+.seg{--p:clamp(0,(var(--t) - var(--a)) * var(--w),1);position:absolute;top:0;bottom:0;left:calc(var(--a) * 100%);width:calc((var(--b) - var(--a)) * 100% - 5px);
+  border-radius:12px;background:color-mix(in oklab,var(--ink) 6%,transparent);--fill:color-mix(in oklab,var(--ink) 17%,var(--fld))}
+.seg::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--fill);clip-path:inset(0 calc(100% - var(--p) * 100%) 0 0)}
+/* stage names sit under the bars, so short stages like Spec and Handoff stay readable in the card */
+.seg span{position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 9px);font:500 11px/1 var(--font-mono);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;opacity:calc(.45 + var(--p) * .55)}
+.s-i,.s-r{--fill:var(--ink)}
+.s-g{--fill:var(--lime)}
+.lane-sys .seg{border-radius:9px}
+.lane-sys .s-r{width:calc((var(--b) - var(--a)) * 100% - 10px)}
+/* a check pops at the end of every shipped feature */
+.flag{position:absolute;z-index:4;top:-12px;left:calc(var(--b) * 100% - 20px);width:24px;height:24px;display:grid;place-items:center;border-radius:50%;
+  background:var(--lime);box-shadow:0 0 0 3px var(--fld);transform:scale(0);transition:transform .45s var(--ease-spring)}
+.flag::before{content:"";width:9px;height:5px;border-left:2px solid var(--black);border-bottom:2px solid var(--black);transform:translateY(-1px) rotate(-45deg)}
+.flag.on{transform:scale(1)}
+.race-axis{position:relative;height:46px;margin-top:-14px}
+.race-axis span{position:absolute;bottom:0;left:calc(var(--x) * 100%);transform:translateX(-50%);font:500 11px/1 var(--font-mono);color:var(--ink-3);white-space:nowrap}
+.race-axis span:first-child{transform:none}
+.race-axis span:last-of-type{transform:translateX(-100%)}
+.race-day{position:absolute;top:0;left:clamp(30px,calc(var(--t) * 100%),calc(100% - 30px));transform:translateX(-50%);padding:5px 9px;border-radius:999px;
+  background:var(--ink);color:var(--fld);font:500 11px/1 var(--font-mono);white-space:nowrap}
+.race-foot{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px}
+.race-badge{margin:0;padding:11px 20px;border-radius:999px;background:var(--lime);color:var(--black);font:800 21px/1 var(--font-display);letter-spacing:-.02em;
+  opacity:0;transform:scale(.6);transition:transform .55s var(--ease-spring),opacity .2s var(--ease-standard)}
+.race.won .race-badge{opacity:1;transform:none}
+.race-sum{margin:0;max-width:34ch;font-size:15px;color:var(--ink-2);opacity:0;transform:translateY(8px);transition:opacity .4s var(--ease-standard),transform .4s var(--ease-enter)}
+.race.done .race-sum{opacity:1;transform:none}
+.race-replay{margin-left:auto;height:36px;display:inline-flex;align-items:center;gap:8px;padding:0 14px;border:0;border-radius:999px;cursor:pointer;
+  background:color-mix(in oklab,var(--ink) 8%,transparent);color:var(--ink);font:600 13px/1 var(--font-body);visibility:hidden;opacity:0;
+  transition:opacity .3s var(--ease-standard),visibility .3s}
+.race.done .race-replay{visibility:visible;opacity:1}
+.race-replay:hover{background:color-mix(in oklab,var(--ink) 14%,transparent)}
+@media (max-width:700px){
+  .seg span{display:none}
+  .lane-track,.lane:not(.lane-sys) .lane-track{height:46px;margin-bottom:0}
+  .seg{border-radius:10px}
+  .lane-sys .seg{border-radius:7px}
+  .lane-sys .s-r{width:calc((var(--b) - var(--a)) * 100% - 7px)}
+  .seg,.lane-sys .s-i,.lane-sys .s-g{width:calc((var(--b) - var(--a)) * 100% - 3px)}
+  .race-axis span:not(:first-child):not(:last-of-type){display:none}
+}
+
+/* ---------- trusted by ---------- */
+/* the reel sits along the foot of the hero, under a hairline, in the hero's light ink */
+.trust{position:relative;z-index:2;margin-top:auto;padding-top:clamp(28px,3.5vw,40px);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:clamp(20px,4vw,48px)}
+.hero-copy{margin-bottom:clamp(48px,6vw,80px)}
+.trust > p{margin:0;font:500 12px/1.3 var(--font-mono);text-transform:uppercase;letter-spacing:.09em;color:var(--ink-3)}
+.marquee{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
+.marquee-track{display:flex;width:max-content}
+.marquee ul{display:flex;align-items:center;gap:clamp(52px,6vw,96px);list-style:none;margin:0;padding:0 clamp(26px,3vw,48px);min-height:56px}
+.marquee li{display:flex;align-items:center;color:var(--ink-2);transition:color var(--dur-2) var(--ease-standard)}
+.marquee li:hover{color:var(--ink)}
+/* client logos: alpha masks tinted from the theme, sized optically by aspect ratio (generated by tools/logos.py) */
+.logo{display:block;height:calc(var(--h) * var(--k,1));aspect-ratio:var(--ar);background:currentColor;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
+@media (max-width:700px){.marquee{--k:.78}}
+@media (prefers-reduced-motion:no-preference){
+  .marquee-track{animation:marquee 46s linear infinite}
+  .marquee:hover .marquee-track{animation-play-state:paused}
+}
+@keyframes marquee{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.marquee ul[aria-hidden],.marquee li[aria-hidden]{display:none}.marquee ul{flex-wrap:wrap;row-gap:16px}.marquee-track{width:auto}.marquee{-webkit-mask-image:none;mask-image:none}}
+@media (max-width:700px){.trust{grid-template-columns:1fr;gap:16px}.trust > p{padding-left:0}}
+
+/* ---------- sections ---------- */
+.sec{padding-block:clamp(84px,11vw,150px);scroll-margin-top:72px}
+.sec-head{max-width:780px;margin-bottom:clamp(36px,5vw,64px)}
+.body-copy{color:var(--ink-2);font-size:18px;line-height:1.55;max-width:50ch;margin:22px 0 0}
+@supports (animation-timeline: view()){
+  @media (prefers-reduced-motion:no-preference){
+    .reveal{animation:reveal linear both;animation-timeline:view();animation-range:entry 0% entry 45%}
+  }
+}
+@keyframes reveal{from{opacity:.55;transform:translateY(36px) scale(.985)}to{opacity:1;transform:none}}
+
+/* ---------- built in ---------- */
+/* A stage pinned in the centre while the chapters scroll past on both sides: headings on the left, explanations on the right.
+   The chapter level with the stage stays bright and drives which panel the stage shows. */
+.story{--stage-h:min(560px,calc(100vh - 200px));--panel-w:420px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,560px) minmax(0,1fr);
+  grid-template-rows:repeat(3,minmax(84vh,auto));column-gap:clamp(24px,3vw,40px);overflow-x:clip}
+.story-stage{grid-column:2;grid-row:1 / span 3;min-width:0}
+.stage-wrap{position:sticky;top:calc(50vh + 36px - (var(--stage-h) + 52px) / 2)}
+.stage{position:relative;width:min(100%,var(--panel-w));height:var(--stage-h);margin-inline:auto}
+.panel{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;justify-content:center;padding:clamp(22px,2.4vw,30px);border-radius:var(--r-lg);overflow:hidden;
+  opacity:0;transform:translateY(32px) scale(.96);pointer-events:none;
+  transition:opacity var(--dur-3) var(--ease-standard),transform var(--dur-4) var(--ease-enter)}
+.panel.past{transform:translateY(-32px) scale(.96)}
+.panel.on{opacity:1;transform:none;pointer-events:auto}
+/* side-stacked cards: tucked behind the stage, fanned out only for the chapters that have them. Each card can carry its own
+   duration (--d), so the motion chapter's stack lands at 220, 420 and 700ms. */
+.deck{position:absolute;inset:0;z-index:0}
+.deck i{position:absolute;inset:0;border-radius:var(--r-lg);background:var(--c);color:var(--ci);opacity:0;
+  transition:transform var(--d,var(--dur-4)) var(--ease-spring),opacity var(--dur-2) var(--ease-standard)}
+.deck i::after{content:attr(data-label);position:absolute;top:50%;left:var(--ll,auto);right:var(--lr,auto);writing-mode:vertical-rl;transform:translateY(-50%) rotate(180deg);
+  font:500 11px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.deck.on i{opacity:1;transform:var(--to)}
+.pager{display:flex;justify-content:center;gap:6px;margin-top:18px}
+.pager button{height:34px;padding:0 14px;border:0;border-radius:999px;background:var(--grey);color:var(--ink-2);font:600 13px/1 var(--font-body);cursor:pointer;
+  transition:background-color var(--dur-2) var(--ease-standard),color var(--dur-2) var(--ease-standard)}
+.pager button:hover{color:var(--ink)}
+.pager button[aria-current="true"]{background:var(--ink);color:var(--bg)}
+.step{display:contents}
+.step-l,.step-r{grid-row:var(--row);align-self:center;min-width:0;transition:opacity var(--dur-3) var(--ease-standard)}
+.step-l{grid-column:1}
+.step-r{grid-column:3}
+.story.live .step:not(.on) > *{opacity:.22}
+.step-n{margin:0 0 14px;font:500 12px/1 var(--font-mono);letter-spacing:.08em;color:var(--ink-3)}
+.step-l h3{font-size:clamp(30px,3.2vw,46px);font-weight:800;line-height:.95;letter-spacing:-.025em;text-transform:uppercase}
+.step-r p{margin:0;color:var(--ink-2);font-size:17px;line-height:1.55;max-width:34ch}
+.step-r p + p{margin-top:12px;font-size:14px;color:var(--ink-3)}
+@media (max-width:1100px){
+  .story{--panel-w:400px;grid-template-columns:minmax(0,1fr) minmax(0,500px)}
+  .step{display:block;grid-column:1;grid-row:var(--row);align-self:center;transition:opacity var(--dur-3) var(--ease-standard)}
+  .step-r{margin-top:20px}
+}
+@media (max-width:700px){
+  .story{--stage-h:400px;grid-template-columns:minmax(0,1fr);grid-template-rows:none}
+  .story-stage{grid-column:auto;grid-row:auto;position:sticky;top:72px;z-index:2;background:var(--bg);padding-bottom:10px}
+  .stage-wrap{position:static}
+  .deck,.panel .readout{display:none}
+  .panel .spec{gap:16px}
+  .step{grid-column:auto;grid-row:auto;padding:28px 0 24vh}
+  .step:last-child{padding-bottom:8vh}
+}
+/* wide variant (savings, speed, drift): the copy scrolls on the left while the card pins on the right. Panels share one grid
+   cell, so the stage is as tall as its tallest card. Below 900px the cards are too tall to pin: it becomes plain flow,
+   each chapter's copy followed by its card (--o sets the order). */
+.story.story-2col{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-rows:repeat(3,minmax(88vh,auto));column-gap:clamp(40px,6vw,88px);overflow-x:visible}
+.story-2col .stage-wrap{top:max(84px,calc(50vh - 290px))}
+.story-2col .stage{display:grid;width:100%;height:auto}
+.story-2col .panel{position:relative;inset:auto;grid-area:1 / 1;align-self:center;display:block;min-width:0;padding:0;border-radius:0;overflow:visible}
+.story-2col .step{display:block;grid-column:1;grid-row:var(--row);align-self:center;scroll-margin-top:96px}
+@media (max-width:900px){
+  .story.story-2col{display:flex;flex-direction:column;gap:28px}
+  .story-2col .story-stage,.story-2col .stage-wrap,.story-2col .stage{display:contents}
+  .story-2col .panel{order:var(--o);align-self:stretch;opacity:1;transform:none;pointer-events:auto}
+  .story-2col .step{order:var(--o);align-self:stretch;padding:0}
+  .story-2col .step + .step{margin-top:48px}
+  .story-2col .pager{display:none}
+}
+
+.swatches{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.swatch{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 8px;border-radius:999px;border:0;background:var(--surface);color:var(--n-ink-2);
+  font:600 13px/1 var(--font-body);cursor:pointer;transition:background-color var(--dur-2) var(--ease-standard),color var(--dur-2) var(--ease-standard),transform var(--dur-2) var(--ease-spring)}
+.swatch:active{transform:scale(.95)}
+.swatch i{width:20px;height:20px;border-radius:50%;background:var(--sw);box-shadow:inset 0 0 0 1.5px var(--n-line)}
+.swatch[aria-checked="true"]{background:var(--ink);color:var(--fld)}
+.tp{--tp-primary:var(--azure);--tp-on:var(--azure-ink);--tp-radius:999px;--tp-card:22px;--tp-font:var(--font-display);--tp-weight:800;
+  display:flex;flex-direction:column;gap:18px;padding:22px;border-radius:var(--tp-card);
+  transition:border-radius var(--dur-4) var(--ease-standard)}
+.tp-head{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px}
+.tp-logo{width:26px;height:26px;border-radius:calc(var(--tp-card) / 3);background:var(--tp-primary);transition:background-color var(--dur-4) var(--ease-standard),border-radius var(--dur-4) var(--ease-standard)}
+.tp-chip{margin-left:auto;font:500 12px/1 var(--font-body);padding:6px 10px;border-radius:var(--tp-radius);color:var(--tp-primary);background:color-mix(in oklab,var(--tp-primary) 13%,transparent);
+  transition:color var(--dur-4) var(--ease-standard),background-color var(--dur-4) var(--ease-standard),border-radius var(--dur-4) var(--ease-standard)}
+.tp-label{font-size:13px;color:var(--ink-3)}
+.tp-num{display:block;font-family:var(--tp-font);font-weight:var(--tp-weight);font-size:clamp(36px,4vw,48px);line-height:1;letter-spacing:-.03em;margin-top:6px;font-variant-numeric:tabular-nums}
+.tp-bar{height:8px;border-radius:var(--tp-radius);background:var(--line-2);border:1px solid var(--line);overflow:hidden;transition:border-radius var(--dur-4) var(--ease-standard)}
+.tp-bar i{display:block;height:100%;width:68%;background:var(--tp-primary);transition:background-color var(--dur-4) var(--ease-standard)}
+.tp-row{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:auto}
+.tp-btn{display:inline-flex;align-items:center;height:38px;padding:0 16px;border-radius:var(--tp-radius);background:var(--tp-primary);color:var(--tp-on);font:500 14px/1 var(--font-body);border:1px solid transparent;
+  transition:background-color var(--dur-4) var(--ease-standard),color var(--dur-4) var(--ease-standard),border-radius var(--dur-4) var(--ease-standard)}
+.tp-btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.tp-toggle{margin-left:auto;width:42px;height:24px;border-radius:999px;background:var(--tp-primary);position:relative;transition:background-color var(--dur-4) var(--ease-standard)}
+.tp-toggle::after{content:"";position:absolute;right:3px;top:3px;width:18px;height:18px;border-radius:50%;background:var(--tp-on);transition:background-color var(--dur-4) var(--ease-standard)}
+.readout{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 16px;margin:18px 0 0;font:12px/1.4 var(--font-mono)}
+.readout dt{color:var(--ink-3)}
+.readout dd{margin:0;color:var(--ink)}
+.readout dd.flash{animation:flash var(--dur-4) var(--ease-enter)}
+@keyframes flash{from{color:var(--azure);transform:translateX(4px)}}
+
+.spec{display:grid;gap:28px}
+.spec-type{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.spec-type li{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:7px;border-bottom:1px dashed var(--line)}
+.spec code,.ease-row code{font-size:11px;color:var(--ink-3);white-space:nowrap}
+.st{font-family:var(--font-display);line-height:1;letter-spacing:-.02em}
+.st-1{font-size:40px;font-weight:900;letter-spacing:-.03em;text-transform:uppercase}.st-2{font-size:28px;font-weight:800;letter-spacing:-.025em}.st-3{font-size:20px;font-weight:700}.st-4{font-size:16px}.st-5{font-size:13px;font-weight:600;letter-spacing:0}
+.spec-space{display:grid;gap:8px}
+.spec-space div{display:flex;align-items:center;gap:10px}
+.spec-space i{height:8px;width:calc(var(--w) * 2.4);border-radius:2px;background:var(--ink)}
+.ease{display:grid;gap:14px}
+.ease-row{display:grid;grid-template-columns:8.8em minmax(0,1fr);gap:14px;align-items:center}
+.track{position:relative;height:16px;border-radius:999px;background:var(--line-2);border:1px solid var(--line);overflow:hidden}
+.run{position:absolute;left:1px;top:1px;width:calc(100% - 16px);height:12px}
+.run::before{content:"";position:absolute;left:0;top:0;width:12px;height:12px;border-radius:50%;background:var(--ink)}
+@media (prefers-reduced-motion:no-preference){.run{animation:run 2.4s infinite alternate;animation-timing-function:var(--e)}}
+@keyframes run{0%,14%{transform:translateX(0)}86%,100%{transform:translateX(100%)}}
+
+/* ---------- timeline ---------- */
+.tl-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(40px,6vw,96px)}
+.tl-head{position:sticky;top:110px;align-self:start}
+.tl{list-style:none;margin:0;padding:0 0 0 38px;position:relative;--p:0}
+.tl::before,.tl::after{content:"";position:absolute;left:7px;top:8px;width:2px;border-radius:2px}
+.tl::before{bottom:8px;background:var(--line)}
+.tl::after{height:calc((100% - 16px) * var(--p));background:var(--azure)}
+.tl > li{position:relative;padding-bottom:46px}
+.tl > li:last-child{padding-bottom:0}
+.tl > li::before{content:"";position:absolute;z-index:1;left:-38px;top:5px;box-sizing:border-box;width:16px;height:16px;border-radius:50%;background:var(--bg);border:2px solid var(--line);
+  transition:background-color var(--dur-3) var(--ease-standard),border-color var(--dur-3) var(--ease-standard),transform var(--dur-3) var(--ease-spring)}
+.tl > li.on::before{background:var(--azure);border-color:var(--azure);transform:scale(1.1)}
+.tl-day{font:500 12px/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--azure)}
+.tl h3{margin:10px 0 8px}
+.tl p{margin:0;color:var(--ink-2);max-width:52ch}
+.tl-out,.chips{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:14px 0 0;padding:0}
+.chips{margin-top:20px}
+.tl-out li,.chips li{font:12px/1 var(--font-mono);padding:7px 11px;border-radius:999px;color:var(--ink);background:var(--muted)}
+.price-pill{display:inline-flex;align-items:center;gap:10px;margin-top:28px;padding:8px 16px 8px 8px;border-radius:999px;background:var(--lime);font-size:14px;font-weight:600;color:var(--on-lime)}
+.price-pill b{font:500 13px/1 var(--font-mono);padding:6px 10px;border-radius:999px;background:var(--on-lime);color:var(--lime)}
+
+/* ---------- deliverables ---------- */
+.checks{list-style:none;margin:30px 0 0;padding:0;display:grid;gap:13px}
+.checks li{position:relative;padding-left:34px;line-height:1.45}
+.checks li::before{content:"";position:absolute;left:0;top:0;width:22px;height:22px;border-radius:50%;background:var(--azure)}
+.checks li::after{content:"";position:absolute;left:5px;top:5px;width:12px;height:12px;background:var(--azure-ink);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2l2.3 2.3L9.5 3.8' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2l2.3 2.3L9.5 3.8' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
+.code{margin:0;min-width:0;border-radius:var(--r-lg);overflow:hidden}
+.code figcaption{display:flex;justify-content:space-between;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line);font:12px/1 var(--font-mono);color:var(--ink-3)}
+.code pre{margin:0;padding:20px 18px;overflow-x:auto;font:13px/1.75 var(--font-mono);color:var(--code-pun);tab-size:2}
+.code .k{color:var(--code-key)} .code .s{color:var(--code-str)}
+.code-note{margin:0;padding:14px 18px;border-top:1px solid var(--line);font-size:14px;color:var(--ink-2);background:var(--line-2)}
+
+/* ---------- savings ---------- */
+.calc-panel,.race-card{display:grid;gap:26px;padding:clamp(22px,3vw,38px);border-radius:var(--r-lg)}
+.field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px;align-items:baseline}
+.field label{font-size:15px;font-weight:600}
+.field output{font:500 14px/1 var(--font-mono);font-variant-numeric:tabular-nums}
+.field input{grid-column:1 / -1}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:26px;margin:0;background:transparent;cursor:pointer;--fill:50%}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:6px;background:linear-gradient(90deg,var(--ink) var(--fill),var(--line) var(--fill))}
+input[type=range]::-moz-range-track{height:6px;border-radius:6px;background:var(--line)}
+input[type=range]::-moz-range-progress{height:6px;border-radius:6px;background:var(--ink)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-9px;border-radius:50%;background:var(--ink);border:0;transition:transform var(--dur-2) var(--ease-spring)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--ink);border:0}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+input[type=range]:focus-visible{outline:none}
+input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px var(--fld,var(--bg)),0 0 0 6px var(--ink)}
+input[type=range]:focus-visible::-moz-range-thumb{box-shadow:0 0 0 4px var(--fld,var(--bg)),0 0 0 6px var(--ink)}
+.calc-result{padding-top:24px;border-top:1.5px solid var(--line)}
+.calc-result .eyebrow{margin:0}
+.calc-result strong{display:block;margin-top:10px;font:800 clamp(50px,6.4vw,84px)/1 var(--font-display);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.calc-result p{margin:12px 0 0;color:var(--ink-2)}
+.calc-result .calc-split{margin-top:8px;font-size:14px;color:var(--ink-3)}
+.calc-result .calc-payback{display:inline-flex;margin-top:18px;padding:11px 18px;border-radius:999px;background:var(--black);color:var(--lime);font-weight:600;letter-spacing:-.005em}
+.fine{margin:0;font-size:12.5px;color:var(--ink-3)}
+
+/* ---------- pricing ---------- */
+.pricing{position:relative;isolation:isolate;overflow:hidden;max-width:var(--wide);margin-inline:auto;border-radius:var(--r-xl);scroll-margin-top:72px;
+  padding:clamp(56px,9vw,128px) clamp(18px,4vw,56px)}
+.pixels{position:absolute;inset:0;width:100%;height:100%;z-index:-1;display:block}
+.price-card{max-width:640px;margin-inline:auto;padding:clamp(26px,4vw,50px);border-radius:var(--r-lg)}
+.price{margin:18px 0 6px;font:900 clamp(76px,11vw,132px)/.9 var(--font-display);letter-spacing:-.045em;font-variant-numeric:tabular-nums}
+.price .cur{font-size:.42em;vertical-align:.95em;margin-right:6px;letter-spacing:0;font-weight:700}
+.price-sub{margin:0;color:var(--ink-2)}
+.price-card .btn-lg{margin-top:34px}
+
+/* ---------- faq ---------- */
+.faq{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(40px,6vw,96px)}
+details{border-top:1px solid var(--line)}
+details:last-child{border-bottom:1px solid var(--line)}
+summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:22px 0;font:700 20px/1.3 var(--font-display);letter-spacing:-.015em}
+summary::-webkit-details-marker{display:none}
+.pm{flex:none;position:relative;width:32px;height:32px;border-radius:50%;background:var(--ink);transition:transform var(--dur-3) var(--ease-standard),background-color var(--dur-2) var(--ease-standard)}
+.pm::before,.pm::after{content:"";position:absolute;left:50%;top:50%;width:12px;height:2px;border-radius:1px;background:var(--bg);transform:translate(-50%,-50%)}
+.pm::after{transform:translate(-50%,-50%) rotate(90deg)}
+summary:hover .pm{background:var(--azure)}
+details[open] .pm{transform:rotate(45deg)}
+details p{margin:0 0 24px;color:var(--ink-2);max-width:60ch}
+details::details-content{block-size:0;overflow:hidden;transition:block-size var(--dur-3) var(--ease-standard),content-visibility var(--dur-3) allow-discrete}
+details[open]::details-content{block-size:auto}
+
+/* ---------- booking ---------- */
+/* every "Book" button opens this form in a native modal dialog: focus stays inside, Esc closes it, the page dims and stops scrolling */
+html:has(.booking[open]){overflow:hidden}
+.booking{width:min(640px,calc(100% - 32px));max-height:calc(100dvh - 32px);margin:auto;padding:0;border:0;border-radius:var(--r-xl);overflow:auto;
+  background:var(--surface);color:var(--ink);box-shadow:0 40px 90px -30px rgba(0,0,0,.55)}
+.booking::backdrop{background:rgba(10,10,10,.62)}
+@media (prefers-reduced-motion:no-preference){
+  .booking[open]{animation:bk-in .45s var(--ease-spring)}
+  .booking[open]::backdrop{animation:bk-fade .25s var(--ease-standard)}
+}
+@keyframes bk-in{from{opacity:0;transform:translateY(16px) scale(.97)}}
+@keyframes bk-fade{from{opacity:0}}
+.bk-body{padding:clamp(24px,4.5vw,44px)}
+.bk-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.bk-head h2{font-size:clamp(32px,4.6vw,48px)}
+.bk-sub{margin:12px 0 0;max-width:44ch;color:var(--ink-2)}
+.bk-x{width:42px;height:42px;flex:none;display:grid;place-items:center;border:0;border-radius:50%;background:var(--muted);color:var(--ink);cursor:pointer;
+  transition:background-color var(--dur-2) var(--ease-standard)}
+.bk-x:hover{background:var(--line)}
+.bk-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 16px;margin-top:28px}
+.bk-field{display:grid;gap:8px;min-width:0;margin:0;padding:0;border:0}
+.bk-wide{grid-column:1 / -1}
+.bk-field > label,.bk-field legend{padding:0;font:600 13px/1.2 var(--font-body)}
+.bk-field legend{margin-bottom:8px}
+.bk-opt{font-weight:400;color:var(--ink-3)}
+.bk-field input:not([type=radio]),.bk-field textarea{width:100%;height:50px;padding:0 16px;border:0;border-radius:14px;background:var(--muted);color:var(--ink);
+  font:400 16px/1.3 var(--font-body);outline:none;box-shadow:inset 0 0 0 2px transparent;transition:box-shadow var(--dur-2) var(--ease-standard)}
+.bk-field textarea{height:auto;min-height:104px;padding:14px 16px;resize:vertical}
+.bk-field ::placeholder{color:var(--ink-3)}
+.bk-field input:focus-visible,.bk-field textarea:focus-visible{box-shadow:inset 0 0 0 2px var(--azure)}
+.bk-field input:user-invalid{box-shadow:inset 0 0 0 2px var(--danger)}
+/* choice pills: real radios, visually hidden, so keyboard and validation still work */
+.bk-pills{position:relative;display:flex;flex-wrap:wrap;gap:8px}
+.bk-pills input{position:absolute;left:0;top:0;width:1px;height:1px;opacity:0}
+.bk-pills label{height:42px;display:inline-flex;align-items:center;padding:0 16px;border-radius:999px;background:var(--muted);font:600 14px/1 var(--font-body);cursor:pointer;
+  transition:background-color var(--dur-2) var(--ease-standard),color var(--dur-2) var(--ease-standard)}
+.bk-pills input:checked + label{background:var(--ink);color:var(--bg)}
+.bk-pills input:focus-visible + label{outline:2px solid var(--azure);outline-offset:2px}
+.bk-foot{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin-top:6px}
+.bk-note{margin:0;font-size:13px;color:var(--ink-3)}
+.bk-error{grid-column:1 / -1;margin:0;font-size:14px;color:var(--danger)}
+.bk-done{display:grid;justify-items:center;gap:14px;padding:clamp(28px,5vw,48px) 0 8px;text-align:center}
+.bk-form[hidden],.bk-done[hidden]{display:none}
+.bk-check{width:76px;height:76px;display:grid;place-items:center;border-radius:50%;background:var(--lime)}
+.bk-check::before{content:"";width:26px;height:14px;border-left:4px solid var(--black);border-bottom:4px solid var(--black);transform:translateY(-3px) rotate(-45deg)}
+.bk-done p{margin:0;max-width:40ch;color:var(--ink-2)}
+@media (max-width:600px){.bk-form{grid-template-columns:minmax(0,1fr)}}
+
+/* ---------- close ---------- */
+.final{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:32px;padding:clamp(32px,6vw,80px);border-radius:var(--r-xl);margin-bottom:clamp(40px,6vw,72px);scroll-margin-top:72px}
+.final h2{max-width:12ch;font-size:clamp(40px,6.4vw,92px);font-weight:900;line-height:.88}
+.final-side{display:grid;gap:14px;justify-items:start}
+.final-side p{margin:0;color:var(--ink-3);font:12px/1.4 var(--font-mono);text-transform:uppercase;letter-spacing:.08em}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;padding-block:26px 40px;border-top:1px solid var(--line);color:var(--ink-3);font-size:13px}
+
+@media (max-width:900px){
+  .tl-grid,.faq{grid-template-columns:minmax(0,1fr)}
+  .tl-head{position:static}
+}
+@media (max-width:560px){
+  .ease-row{grid-template-columns:minmax(0,1fr)}
+  h3{font-size:23px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition-duration:1ms!important}}
+/* client logo masks (generated by tools/logos.py) */
+.lg-tnf{--h:39.3px;--ar:2.0793;--m:url("data:image/png;base64,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")}
+.lg-consensys{--h:27.3px;--ar:4.6569;--m:url("data:image/png;base64,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")}
+.lg-cornerstone{--h:23.7px;--ar:6.4099;--m:url("data:image/png;base64,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")}
+.lg-ericsson{--h:46px;--ar:1.1396;--m:url("data:image/png;base64,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")}
+.lg-metamask{--h:39.9px;--ar:2.0159;--m:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 127 63%22%3E %3Cpath fill=%22%23000%22 d=%22M71.554 48.607v13.81h-7.072v-9.568l-8.059.945c-1.77.205-2.548.79-2.548 1.864 0 1.575 1.478 2.239 4.648 2.239 1.932 0 4.073-.29 5.963-.79l-3.66 5.225c-1.479.332-2.92.496-4.44.496-6.414 0-10.074-2.57-10.074-7.132 0-4.023 2.877-6.136 9.416-6.884l8.638-1.012c-.467-2.532-2.362-3.633-6.13-3.633-3.537 0-7.443.912-10.937 2.613l1.111-6.18c3.248-1.369 6.95-2.074 10.69-2.074 8.226 0 12.461 3.444 12.461 10.075l-.008.005ZM7.938 31.315.208 62.416h7.73l3.836-15.628 6.65 8.039h8.06l6.65-8.039 3.836 15.628h7.73l-7.73-31.105-14.518 17.388L7.934 31.311l.004.004ZM36.97.21 22.452 17.598 7.938.21.208 31.315h7.73l3.836-15.628 6.65 8.039h8.06l6.65-8.039 3.836 15.628h7.73L36.97.21Zm53.17 48.107-6.25-.912c-1.562-.247-2.178-.747-2.178-1.617 0-1.41 1.52-2.032 4.647-2.032 3.62 0 6.868.747 10.283 2.364l-.862-6.094c-2.757-.995-5.922-1.491-9.212-1.491-7.688 0-11.886 2.696-11.886 7.547 0 3.776 2.303 5.889 7.196 6.636l6.335.954c1.603.248 2.261.87 2.261 1.865 0 1.41-1.478 2.074-4.481 2.074-3.948 0-8.225-.953-11.72-2.654l.7 6.094c3.003 1.122 6.91 1.785 10.57 1.785 7.896 0 12.007-2.78 12.007-7.715 0-3.94-2.303-6.057-7.4-6.8l-.01-.004ZM100.3 34.09v28.325h7.071V34.091H100.3Zm15.334 15.595 9.833-10.744h-8.8l-9.296 11.114 9.912 12.356h8.925l-10.574-12.73v.004Zm-16.321-25.09c0 4.56 3.66 7.13 10.074 7.13 1.52 0 2.961-.167 4.44-.495l3.66-5.225c-1.89.496-4.031.79-5.963.79-3.166 0-4.648-.664-4.648-2.239 0-1.079.783-1.659 2.549-1.864l8.058-.945v9.567h7.072v-13.81c0-6.635-4.236-10.075-12.461-10.075-3.744 0-7.442.705-10.691 2.075l-1.112 6.178c3.495-1.701 7.401-2.613 10.937-2.613 3.769 0 5.664 1.1 6.13 3.633l-8.637 1.013c-6.539.747-9.417 2.86-9.417 6.883l.009-.004Zm-19.779-1.492c0 5.725 3.29 8.627 9.787 8.627 2.59 0 4.732-.416 6.785-1.37l.903-6.261c-1.974 1.2-3.99 1.822-6.005 1.822-3.044 0-4.402-1.243-4.402-4.023v-8.295h10.732V7.84H86.601V2.948l-13.448 7.174v3.482h6.372V23.1l.008.004Zm-6.95-2.612v1.411H53.47c.862 2.873 3.423 4.187 7.97 4.187 3.62 0 6.993-.747 9.992-2.196l-.862 6.056c-2.757 1.16-6.251 1.785-9.829 1.785-9.5 0-14.68-4.23-14.68-12.066 0-7.838 5.264-12.235 13.406-12.235s13.119 4.771 13.119 13.062l-.005-.004ZM53.378 17.09h12.086c-.637-2.751-2.732-4.188-6.08-4.188-3.349 0-5.335 1.399-6.006 4.188Z%22/%3E %3C/svg%3E")}
+.lg-fantasy{--h:28px;--ar:4.4200;--m:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 442 100%22%3E %3Cpath fill=%22%23000%22 d=%22M20 2C36 2 40 14 50 14S64 2 80 2c11 0 18 7 18 18 0 16-12 20-12 30s12 14 12 30c0 11-7 18-18 18-16 0-20-12-30-12S36 98 20 98C9 98 2 91 2 80c0-16 12-20 12-30S2 36 2 20C2 9 9 2 20 2Z%22/%3E %3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%225%22 d=%22M152 67V33h26M152 50h22M192 67l15-34 15 34M240 67V33l26 34V33M280 33h26M293 33v34M320 67l15-34 15 34M392 37c-4-3-8-4-13-4-7 0-12 4-12 9 0 11 26 7 26 17 0 5-5 8-12 8-6 0-11-2-14-5M408 33l13 17 13-17M421 50v17%22/%3E %3C/svg%3E")}
+</style>
+
+<div class="page">
+  <header class="nav" id="nav">
+    <a class="brand" href="#top"><svg class="brand-mark" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8"/><path d="M11.5 8.5 17 14l-5.5 5.5"/></svg>DS Sprint</a>
+    <nav aria-label="Sections">
+      <a href="#savings">Savings</a>
+      <a href="#faster">Speed</a>
+      <a href="#deliverables">Drift</a>
+      <a href="#built-in">Automate</a>
+      <a href="#timeline">10 days</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn btn-sm btn-primary" href="#pricing" data-book>Book a sprint</a>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero fill-black" id="top">
+      <div class="ai-demo chatting" role="img" aria-label="An AI chat is asked to create an onboarding UI flow. The first screen assembles into a card, the other screens stack up behind it, and each is swiped through to an onboarding-complete check.">
+        <div class="ob-scene">
+          <div class="ob-float">
+            <div class="ob pill">
+              <div class="ob-ui">
+                <div class="ob-top"><span class="ob-back off el"></span><span class="ob-prog el"><i class="on"></i><i></i><i></i><i></i><i></i></span><span class="ob-skip el">Skip</span></div>
+                <div class="ob-vis el" style="--v:var(--sky)">
+                  <span class="ob-app el"><svg viewBox="0 0 24 24"><path d="M12 2c.6 4.6 2.4 7.4 10 10-7.6 2.6-9.4 5.4-10 10-.6-4.6-2.4-7.4-10-10 7.6-2.6 9.4-5.4 10-10z" fill="currentColor"/></svg></span>
+                  <span class="ob-tag ob-tag-a el"><i></i>Tasks</span>
+                  <span class="ob-tag ob-tag-b el">Projects</span>
+                  <i class="ob-dot el"></i>
+                </div>
+                <p class="ob-t el">Welcome to Acme</p>
+                <p class="ob-s el">Plan, track and ship work in one place.</p>
+                <span class="ob-btn el">Get started</span>
+              </div>
+            </div>
+            <div class="ob tuck">
+              <div class="ob-ui">
+                <div class="ob-top"><span class="ob-back"></span><span class="ob-prog"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="ob-skip">Skip</span></div>
+                <div class="ob-vis ob-prof">
+                  <span class="ob-field"><span class="ob-av">ML</span><span class="ob-in">Maria Lopez</span></span>
+                  <span class="ob-roles"><span class="on">Design</span><span>Product</span><span>Engineering</span></span>
+                </div>
+                <p class="ob-t">Tell us about you</p>
+                <p class="ob-s">We’ll tailor your workspace to your role.</p>
+                <span class="ob-btn">Continue</span>
+              </div>
+            </div>
+            <div class="ob tuck">
+              <div class="ob-ui">
+                <div class="ob-top"><span class="ob-back"></span><span class="ob-prog"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="ob-skip">Skip</span></div>
+                <div class="ob-vis" style="--v:var(--c-lime)">
+                  <span class="avs"><i style="--c:var(--blue);--ci:var(--on-blue)">J</i><i style="--c:var(--sky)">S</i><i style="--c:var(--c-bg)">A</i><i style="--c:var(--c-ink);--ci:var(--c-bg)">+2</i></span>
+                  <span class="ob-invite"><b>sam@acme.co</b><span>Invite</span></span>
+                </div>
+                <p class="ob-t">Invite your team</p>
+                <p class="ob-s">Everything’s better together.</p>
+                <span class="ob-btn">Send invites</span>
+              </div>
+            </div>
+            <div class="ob tuck">
+              <div class="ob-ui">
+                <div class="ob-top"><span class="ob-back"></span><span class="ob-prog"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="ob-skip">Skip</span></div>
+                <div class="ob-vis">
+                  <span class="themes"><i class="on" style="--c:var(--c-bg);--ci:var(--c-ink)"><b></b></i><i style="--c:var(--c-ink);--ci:var(--c-bg)"></i><i style="--c:var(--blue);--ci:var(--on-blue)"></i></span>
+                </div>
+                <p class="ob-t">Choose a theme</p>
+                <p class="ob-s">Switch any time in settings.</p>
+                <span class="ob-btn">Continue</span>
+              </div>
+            </div>
+            <div class="ob tuck">
+              <div class="ob-ui">
+                <div class="ob-top"><span class="ob-back"></span><span class="ob-prog"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="ob-skip">Skip</span></div>
+                <div class="ob-vis"><svg class="seal" viewBox="0 0 120 120"><g class="seal-rays"></g><path class="seal-bg"/><path class="seal-check" d="M40 62l14 14 28-30"/></svg></div>
+                <p class="ob-t">Onboarding complete</p>
+                <p class="ob-s">Your workspace is ready.</p>
+                <span class="ob-btn">Go to dashboard</span>
+              </div>
+            </div>
+            <div class="ob-chat">
+              <span class="ob-spark"><svg viewBox="0 0 24 24"><path d="M12 2c.6 4.6 2.4 7.4 10 10-7.6 2.6-9.4 5.4-10 10-.6-4.6-2.4-7.4-10-10 7.6-2.6 9.4-5.4 10-10z" fill="currentColor"/></svg></span>
+              <span class="ob-typed"></span>
+              <span class="ob-send"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-copy">
+        <h1><span class="w" style="--i:0">AI-enabled</span> <span class="w" style="--i:1">design</span> <span class="w" style="--i:2">system</span> <span class="w" style="--i:3">in</span> <span class="w hl" style="--i:4">two weeks</span></h1>
+        <span class="stamp" role="img" aria-label="Best for startups">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <defs><path id="stamp-ring" d="M60 60m-44 0a44 44 0 1 1 88 0a44 44 0 1 1-88 0"/></defs>
+            <circle class="stamp-bg" cx="60" cy="60" r="58"/>
+            <g class="stamp-spin"><text textLength="274" lengthAdjust="spacing"><textPath href="#stamp-ring">Best for startups · Best for startups ·</textPath></text></g>
+            <circle class="stamp-core" cx="60" cy="60" r="24"/>
+            <g class="stamp-rocket" transform="translate(48 48)">
+              <path d="M12 3c2.8 1.7 4.5 5 4.5 8.5V15l-1.5 2.5h-6L7.5 15v-3.5C7.5 8 9.2 4.7 12 3z"/>
+              <circle cx="12" cy="10" r="1.7"/>
+              <path d="M7.5 13.5 5 16v3l3-1.5M16.5 13.5 19 16v3l-3-1.5M10.5 19.5 12 22l1.5-2.5"/>
+            </g>
+          </svg>
+        </span>
+        <p class="lede">Design &amp; implement UI, just by talking to your AI, while maintaining scalable UI system &amp; staying aligned with production.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#pricing" data-book>Book a sprint <span class="tag">$5,000</span></a>
+          <a class="btn btn-ghost" href="#timeline">See the 10 days</a>
+        </div>
+      </div>
+
+      <!-- TRUSTED BY: the logo reel runs along the foot of the hero -->
+      <div class="trust" role="group" aria-label="Trusted by">
+        <p>Trusted by</p>
+        <div class="marquee">
+          <div class="marquee-track">
+            <ul>
+              <li><span class="logo lg-tnf" role="img" aria-label="The North Face"></span></li>
+              <li><span class="logo lg-consensys" role="img" aria-label="Consensys"></span></li>
+              <li><span class="logo lg-metamask" role="img" aria-label="MetaMask"></span></li>
+              <li><span class="logo lg-fantasy" role="img" aria-label="Fantasy"></span></li>
+              <li><span class="logo lg-ericsson" role="img" aria-label="Ericsson"></span></li>
+              <li><span class="logo lg-cornerstone" role="img" aria-label="Cornerstone OnDemand"></span></li>
+              <li aria-hidden="true"><span class="logo lg-tnf"></span></li>
+              <li aria-hidden="true"><span class="logo lg-consensys"></span></li>
+              <li aria-hidden="true"><span class="logo lg-metamask"></span></li>
+              <li aria-hidden="true"><span class="logo lg-fantasy"></span></li>
+              <li aria-hidden="true"><span class="logo lg-ericsson"></span></li>
+              <li aria-hidden="true"><span class="logo lg-cornerstone"></span></li>
+            </ul>
+            <ul aria-hidden="true">
+              <li><span class="logo lg-tnf"></span></li><li><span class="logo lg-consensys"></span></li><li><span class="logo lg-metamask"></span></li><li><span class="logo lg-fantasy"></span></li><li><span class="logo lg-ericsson"></span></li><li><span class="logo lg-cornerstone"></span></li>
+              <li><span class="logo lg-tnf"></span></li><li><span class="logo lg-consensys"></span></li><li><span class="logo lg-metamask"></span></li><li><span class="logo lg-fantasy"></span></li><li><span class="logo lg-ericsson"></span></li><li><span class="logo lg-cornerstone"></span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="stats-band fill-lime" aria-label="Results">
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-txt"><b>$200k+</b><span>saved a year</span></div>
+          <a class="round" href="#savings" aria-label="Work out your savings"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+        <div class="stat">
+          <div class="stat-txt"><b>5×</b><span>faster delivery</span></div>
+          <a class="round" href="#faster" aria-label="See how teams ship faster"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+        <div class="stat">
+          <div class="stat-txt"><b>90%</b><span>less design–dev drift</span></div>
+          <a class="round" href="#deliverables" aria-label="See how drift is prevented"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+      </div>
+    </section>
+
+    <div class="inner">
+      <!-- PROOF: savings, speed and drift share one card pinned on the right; each chapter's copy scrolls past on the left -->
+      <section class="sec" id="proof" aria-label="Savings, speed and drift">
+        <div class="story story-2col" data-linear="900">
+          <div class="story-stage">
+            <div class="stage-wrap">
+              <div class="stage">
+                <div class="panel" style="--o:2" role="group" aria-label="Savings calculator">
+                  <div class="calc-panel fill-grey">
+                    <div class="field">
+                      <label for="c-des">Designers</label>
+                      <output id="o-des" for="c-des">1 designer</output>
+                      <input type="range" id="c-des" min="1" max="5" step="1" value="1">
+                    </div>
+                    <div class="field">
+                      <label for="c-eng">UI engineers</label>
+                      <output id="o-eng" for="c-eng">2 engineers</output>
+                      <input type="range" id="c-eng" min="1" max="20" step="1" value="2">
+                    </div>
+                    <div class="field">
+                      <label for="c-pay">Average salary</label>
+                      <output id="o-pay" for="c-pay">$150k</output>
+                      <input type="range" id="c-pay" min="60000" max="300000" step="5000" value="150000">
+                    </div>
+                    <div class="calc-result">
+                      <p class="eyebrow">Estimated yearly savings</p>
+                      <strong id="c-out">$225,000</strong>
+                      <p class="calc-split" id="c-split">About 60 hours a week back, 1.5 people’s worth of time.</p>
+                      <p class="calc-payback" id="c-payback">The sprint pays for itself in about 6 working days.</p>
+                    </div>
+                    <p class="fine">Assumes designers and UI engineers spend most of their week on design, handoff and building UI, and the system halves it: about 20 hours back each. Salary value of the time freed up; an estimate for planning, not a guarantee.</p>
+                  </div>
+                </div>
+                <div class="panel" style="--o:4" role="group" aria-label="The same feature through two workflows">
+                  <div class="race-card race fill-grey">
+                    <div class="race-board" id="race">
+                      <div class="lane">
+                        <div class="lane-head">
+                          <h3>Traditional handoff</h3>
+                          <p class="lane-flow">Design → spec → handoff → build → QA → fixes</p>
+                          <p class="lane-count"><b>0</b>shipped</p>
+                        </div>
+                        <ol class="lane-track" aria-label="Ten days for one feature">
+                          <li class="seg" style="--a:0;--b:.2;--w:5"><span>Design</span></li>
+                          <li class="seg" style="--a:.2;--b:.3;--w:10"><span>Spec</span></li>
+                          <li class="seg" style="--a:.3;--b:.4;--w:10"><span>Handoff</span></li>
+                          <li class="seg" style="--a:.4;--b:.8;--w:2.5"><span>Build</span></li>
+                          <li class="seg" style="--a:.8;--b:1;--w:5"><span>QA &amp; fixes</span></li>
+                          <li class="flag" data-at="1" style="--b:1" aria-hidden="true"></li>
+                        </ol>
+                      </div>
+                      <div class="lane lane-sys">
+                        <div class="lane-head">
+                          <h3>With your system</h3>
+                          <p class="lane-flow"><span class="key" style="--kc:var(--ink)">Intent</span>→<span class="key" style="--kc:var(--lime)">generate</span>→<span class="key" style="--kc:var(--ink)">review</span></p>
+                          <p class="lane-count"><b>0</b>shipped</p>
+                        </div>
+                        <ol class="lane-track" aria-label="Two days per feature, five features in ten days">
+                            <li class="seg s-i" style="--a:0;--b:0.055;--w:18.18"></li>
+                            <li class="seg s-g" style="--a:0.055;--b:0.13;--w:13.33"></li>
+                            <li class="seg s-r" style="--a:0.13;--b:0.2;--w:14.29"></li>
+                            <li class="flag" data-at="0.2" style="--b:0.2" aria-hidden="true"></li>
+                            <li class="seg s-i" style="--a:0.2;--b:0.255;--w:18.18"></li>
+                            <li class="seg s-g" style="--a:0.255;--b:0.33;--w:13.33"></li>
+                            <li class="seg s-r" style="--a:0.33;--b:0.4;--w:14.29"></li>
+                            <li class="flag" data-at="0.4" style="--b:0.4" aria-hidden="true"></li>
+                            <li class="seg s-i" style="--a:0.4;--b:0.455;--w:18.18"></li>
+                            <li class="seg s-g" style="--a:0.455;--b:0.53;--w:13.33"></li>
+                            <li class="seg s-r" style="--a:0.53;--b:0.6;--w:14.29"></li>
+                            <li class="flag" data-at="0.6" style="--b:0.6" aria-hidden="true"></li>
+                            <li class="seg s-i" style="--a:0.6;--b:0.655;--w:18.18"></li>
+                            <li class="seg s-g" style="--a:0.655;--b:0.73;--w:13.33"></li>
+                            <li class="seg s-r" style="--a:0.73;--b:0.8;--w:14.29"></li>
+                            <li class="flag" data-at="0.8" style="--b:0.8" aria-hidden="true"></li>
+                            <li class="seg s-i" style="--a:0.8;--b:0.855;--w:18.18"></li>
+                            <li class="seg s-g" style="--a:0.855;--b:0.93;--w:13.33"></li>
+                            <li class="seg s-r" style="--a:0.93;--b:1;--w:14.29"></li>
+                            <li class="flag" data-at="1" style="--b:1" aria-hidden="true"></li>
+                        </ol>
+                      </div>
+                      <div class="race-axis" aria-hidden="true">
+                        <span style="--x:0">Day 0</span><span style="--x:.2">2</span><span style="--x:.4">4</span><span style="--x:.6">6</span><span style="--x:.8">8</span><span style="--x:1">10 days</span>
+                        <b class="race-day">Day 0</b>
+                      </div>
+                    </div>
+                    <div class="race-foot">
+                      <p class="race-badge">5× faster</p>
+                      <p class="race-sum">In the time one feature ships the old way, your team ships five.</p>
+                      <button type="button" class="race-replay"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9M2.5 2.5v3h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Replay</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="panel" style="--o:6" role="group" aria-label="Example token file">
+                  <figure class="code fill-black">
+                    <figcaption><span>tokens.json</span><span>DTCG format</span></figcaption>
+<pre><code>{
+  <span class="k">"color"</span>: {
+    <span class="k">"success"</span>: {
+      <span class="k">"$value"</span>: <span class="s">"{green.600}"</span>,
+      <span class="k">"$description"</span>: <span class="s">"Positive outcomes: saved, paid,
+        complete. Never decorative."</span>
+    }
+  },
+  <span class="k">"button"</span>: {
+    <span class="k">"radius"</span>: {
+      <span class="k">"$value"</span>: <span class="s">"{radius.full}"</span>,
+      <span class="k">"$description"</span>: <span class="s">"Pill buttons. Why: brand
+        signature; radius.control is 8px."</span>
+    }
+  }
+}</code></pre>
+                    <p class="code-note">Every token says what it’s for. Every component token says why the shared ones weren’t enough.</p>
+                  </figure>
+                </div>
+              </div>
+              <div class="pager" aria-label="Chapters">
+                <button type="button" aria-current="true">Savings</button>
+                <button type="button" aria-current="false">Speed</button>
+                <button type="button" aria-current="false">Drift</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="step" id="savings" style="--row:1;--o:1">
+            <h2>What UI rework costs your team</h2>
+            <p class="body-copy">Even with a designer on the team, every screen is designed, specced, handed off, rebuilt in code and fixed. With the system, designers spend less time on screens and handoff, and UI engineers less on building and maintaining components. Move the sliders to match your team.</p>
+          </div>
+          <div class="step" id="faster" style="--row:2;--o:3">
+            <h2 id="race-h">From idea to production, <em>5× shorter.</em></h2>
+            <p class="body-copy">The old way, a feature crawls through design, spec, handoff, build and QA. With your system it goes from intent to reviewed, production-ready UI in a fifth of the time.</p>
+          </div>
+          <div class="step" id="deliverables" style="--row:3;--o:5">
+            <h2>90% less drift between design and code</h2>
+            <p class="body-copy">Every design decision lives in tokens and components that people and AI build from, so each screen comes out on system instead of drifting away from it.</p>
+            <ul class="checks">
+              <li>Three-tier token system: primitive, semantic and component</li>
+              <li>Light, dark and brand themes from the same tokens</li>
+              <li>A description on every token, so people and AI pick the right one</li>
+              <li>A type scale, with every string in the product mapped to it</li>
+              <li>Motion tokens for easing and duration, applied to components</li>
+              <li>Storybook with every component, variant and state</li>
+              <li>Usage guardrails for common components</li>
+              <li>AI agent rules and skills, so generated UI stays on system</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- BUILT IN -->
+      <section class="sec" id="built-in">
+        <header class="sec-head reveal">
+          <h2>What you’ll automate</h2>
+        </header>
+        <div class="story" id="story">
+          <div class="story-stage">
+            <div class="stage-wrap">
+              <div class="stage">
+                <div class="deck" data-for="0" aria-hidden="true">
+                  <i data-label="Dark mode" style="--c:var(--black);--ci:var(--on-black);--to:translateX(-64px) rotate(-6deg);--ll:20px"></i>
+                  <i data-label="Client theme" style="--c:var(--lime);--ci:var(--on-lime);--to:translateX(64px) rotate(6deg);--lr:20px"></i>
+                </div>
+                <div class="deck" data-for="2" aria-hidden="true">
+                  <i data-label="duration.slow · 700ms" style="--c:var(--lime);--ci:var(--on-lime);--to:translateX(78px);--d:var(--dur-4);--lr:7px"></i>
+                  <i data-label="duration.base · 420ms" style="--c:var(--blue);--ci:var(--on-blue);--to:translateX(54px);--d:var(--dur-3);--lr:7px"></i>
+                  <i data-label="duration.fast · 220ms" style="--c:var(--sky);--ci:var(--on-sky);--to:translateX(30px);--d:var(--dur-2);--lr:7px"></i>
+                </div>
+
+                <div class="panel fill-grey" role="group" aria-label="Theming demo">
+                  <div class="swatches" role="radiogroup" aria-label="Preview a theme" id="swatches"></div>
+                  <div class="tp surface" id="tp" aria-label="Example product screen">
+                    <div class="tp-head"><span class="tp-logo"></span>Acme Billing<span class="tp-chip">Pro</span></div>
+                    <div><span class="tp-label">Revenue this month</span><span class="tp-num">$48,210</span></div>
+                    <div class="tp-bar"><i></i></div>
+                    <div class="tp-row"><span class="tp-btn">Send invoice</span><span class="tp-btn ghost">Export</span><span class="tp-toggle" aria-hidden="true"></span></div>
+                  </div>
+                  <dl class="readout" id="readout">
+                    <dt>color.primary</dt><dd>azure.500</dd>
+                    <dt>radius.control</dt><dd>radius.full</dd>
+                    <dt>font.heading</dt><dd>display / 800</dd>
+                  </dl>
+                </div>
+
+                <div class="panel fill-sky" role="group" aria-label="Type and spacing scales">
+                  <div class="spec">
+                    <ol class="spec-type">
+                      <li><span class="st st-1">Ship it</span><code>display 40</code></li>
+                      <li><span class="st st-2">Ship it</span><code>title 28</code></li>
+                      <li><span class="st st-3">Ship it</span><code>heading 20</code></li>
+                      <li><span class="st st-4">Ship it</span><code>body 16</code></li>
+                      <li><span class="st st-5">Ship it</span><code>caption 13</code></li>
+                    </ol>
+                    <div class="spec-space" aria-label="Spacing scale">
+                      <div><i style="--w:4px"></i><code>space.1 · 4</code></div>
+                      <div><i style="--w:8px"></i><code>space.2 · 8</code></div>
+                      <div><i style="--w:12px"></i><code>space.3 · 12</code></div>
+                      <div><i style="--w:16px"></i><code>space.4 · 16</code></div>
+                      <div><i style="--w:24px"></i><code>space.6 · 24</code></div>
+                      <div><i style="--w:32px"></i><code>space.8 · 32</code></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="panel fill-black" role="group" aria-label="Easing demo">
+                  <div class="ease">
+                    <div class="ease-row"><code>ease.standard</code><div class="track"><div class="run" style="--e:var(--ease-standard)"></div></div></div>
+                    <div class="ease-row"><code>ease.enter</code><div class="track"><div class="run" style="--e:var(--ease-enter)"></div></div></div>
+                    <div class="ease-row"><code>ease.exit</code><div class="track"><div class="run" style="--e:var(--ease-exit)"></div></div></div>
+                    <div class="ease-row"><code>ease.spring</code><div class="track"><div class="run" style="--e:var(--ease-spring)"></div></div></div>
+                    <div class="ease-row"><code>ease.linear</code><div class="track"><div class="run" style="--e:linear"></div></div></div>
+                  </div>
+                </div>
+              </div>
+              <div class="pager" aria-label="Chapters">
+                <button type="button" aria-current="true">Theming</button>
+                <button type="button" aria-current="false">Brand</button>
+                <button type="button" aria-current="false">Motion</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="step" style="--row:1">
+            <div class="step-l"><p class="step-n">01 / 03</p><h3>Flexible theming</h3></div>
+            <div class="step-r">
+              <p>Change your brand, add a client theme or ship dark mode by switching tokens. The components stay untouched.</p>
+              <p>Pick a swatch on the card to switch themes.</p>
+              <ul class="chips"><li>color.primary</li><li>radius.control</li><li>font.heading</li></ul>
+            </div>
+          </div>
+          <div class="step" style="--row:2">
+            <div class="step-l"><p class="step-n">02 / 03</p><h3>Consistent brand visuals</h3></div>
+            <div class="step-r">
+              <p>Color, type, spacing, radius and shadow follow one set of rules. Every screen looks like the same product, whoever built it.</p>
+              <ul class="chips"><li>type.scale</li><li>space.scale</li><li>radius</li></ul>
+            </div>
+          </div>
+          <div class="step" style="--row:3">
+            <div class="step-l"><p class="step-n">03 / 03</p><h3>Motion integration</h3></div>
+            <div class="step-r">
+              <p>Easing and duration live in tokens. Drawers slide from their edge, menus grow from their trigger, buttons press down.</p>
+              <p>Spring is kept for small tactile feedback: a press settling, a toggle thumb.</p>
+              <ul class="chips"><li>ease.*</li><li>duration.*</li></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TIMELINE -->
+      <section class="sec" id="timeline">
+        <div class="tl-grid">
+          <header class="tl-head reveal">
+            <h2>10 working days, kickoff to handover</h2>
+            <p class="body-copy">Each day ends with something you can open and check. On day 10 your team owns a documented system that keeps itself healthy.</p>
+            <p class="price-pill"><b>$5,000</b>Fixed price, fixed scope</p>
+          </header>
+          <ol class="tl" id="tl">
+            <li>
+              <span class="tl-day">Days 1–2</span>
+              <h3>Assess and decide</h3>
+              <p>We audit your product UI, codebase and any design files, then agree the decisions that matter with you: source of truth, naming and themes.</p>
+              <ul class="tl-out"><li>Health report</li><li>Decision log</li></ul>
+            </li>
+            <li>
+              <span class="tl-day">Days 3–4</span>
+              <h3>Token architecture</h3>
+              <p>Primitive, semantic and component tiers in one source file. Every token gets a description that says what it’s for and when to use it.</p>
+              <ul class="tl-out"><li>tokens.json</li><li>Light + dark</li><li>100% described</li></ul>
+            </li>
+            <li>
+              <span class="tl-day">Day 5</span>
+              <h3>Typography</h3>
+              <p>A baseline body style and a clear hierarchy. Every piece of text in the product maps to one level.</p>
+              <ul class="tl-out"><li>Type scale</li><li>Text styles</li></ul>
+            </li>
+            <li>
+              <span class="tl-day">Days 6–8</span>
+              <h3>Components and Storybook</h3>
+              <p>When to use each component, when not to, and its do’s and don’ts. Storybook shows every variant and state.</p>
+              <ul class="tl-out"><li>Storybook</li><li>Guardrails</li></ul>
+            </li>
+            <li>
+              <span class="tl-day">Day 9</span>
+              <h3>AI agent setup</h3>
+              <p>Rules and skills go where your AI tools read them, so generated UI follows the system on the first pass.</p>
+              <ul class="tl-out"><li>Agent rules</li><li>llms.txt</li></ul>
+            </li>
+            <li>
+              <span class="tl-day">Day 10</span>
+              <h3>Handover</h3>
+              <p>A walkthrough with your team, a check against the definition of done, and your first versioned release.</p>
+              <ul class="tl-out"><li>v1.0 release</li><li>Walkthrough</li></ul>
+            </li>
+          </ol>
+        </div>
+      </section>
+    </div>
+
+    <!-- PRICING -->
+    <section class="pricing fill-blue" id="pricing">
+      <canvas class="pixels" aria-hidden="true"></canvas>
+      <div class="price-card surface reveal">
+        <h2>Design System Sprint</h2>
+        <p class="price"><span class="cur">$</span>5,000</p>
+        <p class="price-sub">Fixed price · 10 working days · You own everything</p>
+        <ul class="checks">
+          <li>Single source of truth design system libraries</li>
+          <li>Automated branding &amp; styling</li>
+          <li>Streamlined design-to-dev process</li>
+        </ul>
+        <a class="btn btn-primary btn-lg" href="#book" data-book>Book your sprint</a>
+      </div>
+    </section>
+
+    <div class="inner">
+      <!-- FAQ -->
+      <section class="sec" id="faq">
+        <div class="faq">
+          <header class="reveal">
+            <h2>Before you book</h2>
+          </header>
+          <div class="reveal">
+            <details>
+              <summary>We don’t have a designer. Is this for us?<span class="pm" aria-hidden="true"></span></summary>
+              <p>Yes. The system turns design decisions into tokens and written rules, so engineers and AI tools produce consistent UI without a designer reviewing every screen.</p>
+            </details>
+            <details>
+              <summary>We don’t use Figma.<span class="pm" aria-hidden="true"></span></summary>
+              <p>That’s fine. Code is the source of truth, so you design and build directly in code.</p>
+            </details>
+            <details>
+              <summary>Do we need an existing design system?<span class="pm" aria-hidden="true"></span></summary>
+              <p>No. We start from whatever you have: a live product, a component folder, a brand guide or a few screens. Days 1 and 2 turn it into a plan.</p>
+            </details>
+            <details>
+              <summary>What do we need to prepare?<span class="pm" aria-hidden="true"></span></summary>
+              <p>Access to your repo and any design files, plus someone who can make product decisions on days 1 and 2 and join the handover on day 10.</p>
+            </details>
+            <details>
+              <summary>Where does the $200k+ figure come from?<span class="pm" aria-hidden="true"></span></summary>
+              <p>It’s a typical startup: one designer and two UI engineers on a $150k average salary. The system halves the time they spend on design, handoff and building UI, which frees about 60 hours a week: about $225k a year in salary. Use the calculator above with your own numbers.</p>
+            </details>
+            <details>
+              <summary>What happens after the sprint?<span class="pm" aria-hidden="true"></span></summary>
+              <p>You own everything: the code, the tokens and the docs. The agent rules keep the system consistent as your team ships.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="final fill-lime" id="book">
+        <h2>Ship your next screen on a real system</h2>
+        <div class="final-side">
+          <a class="btn btn-primary btn-lg" href="#book" data-book>Book a sprint <span class="tag">$5,000</span></a>
+          <p>10 working days · Fixed price</p>
+        </div>
+      </section>
+
+      <footer class="foot">
+        <span>© 2026 DS Sprint</span>
+        <span>Design systems for startups</span>
+      </footer>
+    </div>
+  </main>
+</div>
+
+<!-- BOOKING: opened by every [data-book] button -->
+<dialog class="booking" id="booking" aria-labelledby="bk-h">
+  <div class="bk-body">
+    <div class="bk-head">
+      <div>
+        <h2 id="bk-h">Book your sprint</h2>
+        <p class="bk-sub">Tell us a little about your product. We’ll reply within one business day with a kickoff date.</p>
+      </div>
+      <button type="button" class="bk-x" data-close aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9m0-9-9 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+    <!-- Netlify Forms picks this up on deploy (name + data-netlify). To use another service instead, set its URL as the action. -->
+    <form class="bk-form" id="bk-form" name="booking" method="post" action="" data-netlify="true">
+      <input type="hidden" name="form-name" value="booking">
+      <div class="bk-field"><label for="bk-name">Name</label><input id="bk-name" name="name" autocomplete="name" placeholder="Maria Lopez" required></div>
+      <div class="bk-field"><label for="bk-email">Work email</label><input id="bk-email" name="email" type="email" autocomplete="email" placeholder="maria@acme.com" required></div>
+      <div class="bk-field"><label for="bk-company">Company</label><input id="bk-company" name="company" autocomplete="organization" placeholder="Acme" required></div>
+      <div class="bk-field"><label for="bk-site">Website <span class="bk-opt">(optional)</span></label><input id="bk-site" name="website" inputmode="url" autocomplete="url" placeholder="acme.com"></div>
+      <fieldset class="bk-field bk-wide">
+        <legend>How many people build UI?</legend>
+        <div class="bk-pills">
+          <input type="radio" name="team" id="bk-t1" value="1-3" required><label for="bk-t1">1–3</label>
+          <input type="radio" name="team" id="bk-t2" value="4-10"><label for="bk-t2">4–10</label>
+          <input type="radio" name="team" id="bk-t3" value="11-25"><label for="bk-t3">11–25</label>
+          <input type="radio" name="team" id="bk-t4" value="25+"><label for="bk-t4">25+</label>
+        </div>
+      </fieldset>
+      <fieldset class="bk-field bk-wide">
+        <legend>When do you want to start?</legend>
+        <div class="bk-pills">
+          <input type="radio" name="start" id="bk-s1" value="asap" checked><label for="bk-s1">As soon as possible</label>
+          <input type="radio" name="start" id="bk-s2" value="next-month"><label for="bk-s2">Next month</label>
+          <input type="radio" name="start" id="bk-s3" value="exploring"><label for="bk-s3">Just exploring</label>
+        </div>
+      </fieldset>
+      <div class="bk-field bk-wide"><label for="bk-msg">Anything we should know? <span class="bk-opt">(optional)</span></label><textarea id="bk-msg" name="message" rows="3" placeholder="Your stack, design files, deadlines…"></textarea></div>
+      <p class="bk-error" role="alert" hidden>Something went wrong sending your request. Please try again.</p>
+      <div class="bk-foot">
+        <button type="submit" class="btn btn-primary btn-lg">Request my sprint</button>
+        <p class="bk-note">No payment now. We confirm scope and dates with you first.</p>
+      </div>
+    </form>
+    <div class="bk-done" role="status" hidden>
+      <span class="bk-check" aria-hidden="true"></span>
+      <h3>Request received</h3>
+      <p>We’ll email <b class="bk-email"></b> within one business day to confirm scope and a start date.</p>
+      <button type="button" class="btn btn-primary" data-close>Done</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const onTheme = [];
+  const fireTheme = () => requestAnimationFrame(() => onTheme.forEach(f => f()));
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fireTheme);
+  new MutationObserver(fireTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  const whenVisible = (el, on, off) => new IntersectionObserver(es => es.forEach(e => e.isIntersecting ? on() : off())).observe(el);
+
+  /* nav */
+  const nav = $('#nav');
+  const navState = () => nav.classList.toggle('scrolled', scrollY > 12);
+  addEventListener('scroll', navState, { passive: true }); navState();
+
+
+  /* hero: talk to the AI, the onboarding flow assembles and plays through, then folds back into the chat */
+  (function aiDemo() {
+    const root = $('.ai-demo'), cards = $$('.ob', root), first = cards[0], last = cards[cards.length - 1];
+    const typed = $('.ob-typed', root), send = $('.ob-send', root), pieces = $$('.el', first);
+    const PROMPT = 'Create onboarding UI flow';
+    // completion seal: a scalloped rosette with a burst of rays and confetti dots, drawn around the 120×120 box's centre
+    const pt = (a, r) => `${(60 + r * Math.cos(a)).toFixed(2)} ${(60 + r * Math.sin(a)).toFixed(2)}`;
+    let rosette = '';
+    for (let k = 0; k < 12; k++) { const a = k / 12 * 2 * Math.PI, s = Math.PI / 12; rosette += (k ? '' : `M${pt(a, 46)}`) + `Q${pt(a + s, 58)} ${pt(a + 2 * s, 46)}`; }
+    $('.seal-bg', root).setAttribute('d', rosette + 'Z');
+    $('.seal-rays', root).innerHTML = Array.from({ length: 8 }, (_, k) => {
+      const a = k / 8 * 2 * Math.PI + Math.PI / 8, b = a + Math.PI / 8, [x1, y1] = pt(a, 64).split(' '), [x2, y2] = pt(a, 74).split(' '), [cx, cy] = pt(b, 70).split(' ');
+      return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><circle cx="${cx}" cy="${cy}" r="3.5"/>`;
+    }).join('');
+    pieces.forEach((p, k) => p.style.setProperty('--k', k));
+    const snap = fn => { root.classList.add('snap'); fn(); void root.offsetWidth; root.classList.remove('snap'); };
+    // the tilted plane leans a little toward the pointer
+    const scene = $('.ob-scene', root), hero = $('.hero');
+    if (!reduce && matchMedia('(pointer: fine)').matches) {
+      hero.addEventListener('pointermove', e => {
+        const r = hero.getBoundingClientRect();
+        scene.style.setProperty('--px', ((e.clientX - r.left) / r.width - .5).toFixed(3));
+        scene.style.setProperty('--py', ((e.clientY - r.top) / r.height - .5).toFixed(3));
+      });
+      hero.addEventListener('pointerleave', () => { scene.style.setProperty('--px', 0); scene.style.setProperty('--py', 0); });
+    }
+    if (reduce) {
+      snap(() => { root.classList.remove('chatting'); cards.forEach((c, i) => { c.className = 'ob'; c.style.setProperty('--d', i); }); });
+      return;
+    }
+    let visible = false, wake = null;
+    whenVisible(root, () => { visible = true; if (wake) { wake(); wake = null; } }, () => { visible = false; });
+    const pause = async ms => { await wait(ms); if (!visible) await new Promise(r => { wake = r; }); };
+    const rnd = n => (Math.random() * 2 - 1) * n;
+    const loop = async () => {
+      for (;;) {
+        // back to an empty chat input; the first card is the pill underneath it, the rest wait out of sight
+        snap(() => {
+          cards.forEach((c, i) => { c.className = i ? 'ob tuck' : 'ob pill'; c.style.setProperty('--d', 0); });
+          root.classList.add('chatting'); typed.textContent = '';
+        });
+        await pause(900);
+        typed.classList.add('typing');
+        for (const ch of PROMPT) { typed.textContent += ch; await wait(42); }
+        await pause(380);
+        typed.classList.remove('typing');
+        send.classList.add('press'); await wait(160); send.classList.remove('press'); await wait(140);
+        // the input opens into a wireframe card and the screen's pieces fly in from all sides
+        root.classList.remove('chatting');
+        snap(() => { pieces.forEach(p => { p.style.setProperty('--dx', rnd(170) + 'px'); p.style.setProperty('--dy', rnd(150) + 'px'); p.style.setProperty('--rot', rnd(50) + 'deg'); }); first.classList.add('scatter'); });
+        first.classList.remove('pill'); first.classList.add('wire');
+        await pause(440);
+        first.classList.add('build'); first.classList.remove('scatter');
+        await pause(pieces.length * 45 + 560);
+        first.classList.remove('wire', 'build');
+        await pause(700);
+        // the rest of the flow fans out behind it
+        for (let i = 1; i < cards.length; i++) { cards[i].classList.remove('tuck'); cards[i].style.setProperty('--d', i); await wait(70); }
+        await pause(1100);
+        // swipe through to the last screen
+        for (let i = 0; i < cards.length - 1; i++) {
+          cards[i].classList.add('gone');
+          cards.slice(i + 1).forEach((c, j) => c.style.setProperty('--d', j));
+          if (i < cards.length - 2) { await pause(900); continue; }
+          await wait(260); last.classList.add('sealed');
+          await pause(2400);
+        }
+        // the last card empties and folds back into the chat input
+        last.classList.add('blank'); await pause(320);
+        last.classList.add('pill'); await wait(460);
+        typed.textContent = ''; root.classList.add('chatting');
+        await pause(500);
+      }
+    };
+    loop();
+  })();
+
+  /* 5× faster: play both lanes along one time axis whenever their card comes on */
+  (function race() {
+    const sec = $('.race'), board = $('#race', sec), day = $('.race-day', sec), flags = $$('.flag', sec);
+    const [oldCount, sysCount] = $$('.lane-count b', sec), replay = $('.race-replay', sec);
+    const DUR = 3500;
+    const set = t => {
+      board.style.setProperty('--t', t.toFixed(4));
+      day.textContent = 'Day ' + Math.min(10, Math.floor(t * 10 + 1e-6));
+      flags.forEach(f => f.classList.toggle('on', t >= +f.dataset.at - 1e-6));
+      oldCount.textContent = t >= 1 - 1e-6 ? 1 : 0;
+      sysCount.textContent = Math.floor(t * 5 + 1e-6);
+      sec.classList.toggle('won', t >= .2 - 1e-6);
+      sec.classList.toggle('done', t >= 1 - 1e-6);
+    };
+    if (reduce) { set(1); replay.hidden = true; return; }
+    let raf = 0;
+    const play = () => {
+      cancelAnimationFrame(raf);
+      const t0 = performance.now();
+      const step = now => { const t = Math.min(1, (now - t0) / DUR); set(t); if (t < 1) raf = requestAnimationFrame(step); };
+      raf = requestAnimationFrame(step);
+    };
+    replay.addEventListener('click', play);
+    set(0);
+    // pinned story: replay each time this chapter comes up. Plain flow (small screens): play once it scrolls into view.
+    const panel = sec.closest('.panel');
+    panel.addEventListener('panel:on', play);
+    const io = new IntersectionObserver(es => { if (es[0].isIntersecting && !panel.closest('.story.live')) { io.disconnect(); play(); } }, { threshold: .45 });
+    io.observe(board);
+  })();
+
+  /* theme switcher */
+  (function themes() {
+    const T = [
+      { label: 'Akatori', primary: 'var(--azure)', on: 'var(--azure-ink)', radius: '999px', card: '22px', font: 'var(--font-display)', weight: '800', r: ['azure.500', 'radius.full', 'display / 800'] },
+      { label: 'Ledger', primary: 'var(--th-ledger)', on: 'var(--th-on)', radius: '6px', card: '8px', font: 'var(--font-mono)', weight: '500', r: ['teal.700', 'radius.sm', 'mono / 500'] },
+      { label: 'Bloom', primary: 'var(--th-bloom)', on: 'var(--th-on)', radius: '14px', card: '26px', font: 'var(--font-serif)', weight: '400', r: ['coral.600', 'radius.lg', 'serif / 400'] },
+      { label: 'Mono', primary: 'var(--ink)', on: 'var(--bg)', radius: '3px', card: '4px', font: 'var(--font-body)', weight: '650', r: ['ink.950', 'radius.xs', 'body / 650'] }
+    ];
+    const wrap = $('#swatches'), tp = $('#tp'), dds = $$('#readout dd');
+    wrap.innerHTML = T.map((t, i) => `<button type="button" class="swatch" role="radio" aria-checked="${i === 0}" tabindex="${i === 0 ? 0 : -1}" style="--sw:${t.primary}"><i></i>${t.label}</button>`).join('');
+    const btns = $$('.swatch', wrap);
+    const set = i => {
+      const t = T[i];
+      btns.forEach((b, j) => { b.setAttribute('aria-checked', j === i); b.tabIndex = j === i ? 0 : -1; });
+      tp.style.setProperty('--tp-primary', t.primary); tp.style.setProperty('--tp-on', t.on);
+      tp.style.setProperty('--tp-radius', t.radius); tp.style.setProperty('--tp-card', t.card);
+      tp.style.setProperty('--tp-font', t.font); tp.style.setProperty('--tp-weight', t.weight);
+      dds.forEach((d, j) => { d.textContent = t.r[j]; d.classList.remove('flash'); void d.offsetWidth; d.classList.add('flash'); });
+    };
+    btns.forEach((b, i) => b.addEventListener('click', () => set(i)));
+    wrap.addEventListener('keydown', e => {
+      const cur = btns.findIndex(b => b.getAttribute('aria-checked') === 'true');
+      let n = cur;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') n = (cur + 1) % T.length;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') n = (cur + T.length - 1) % T.length;
+      else return;
+      e.preventDefault(); set(n); btns[n].focus();
+    });
+  })();
+
+  /* scroll stories: the chapter nearest the stage's eye line picks the panel, the side decks and the pager. A story with
+     data-linear drops to plain flow below that width, where every panel just shows. A panel fires "panel:on" when it comes up. */
+  $$('.story').forEach(story => {
+    const wrap = $('.stage-wrap', story), panels = $$('.panel', story), decks = $$('.deck', story);
+    const steps = $$('.step', story), pager = $$('.pager button', story);
+    const stacked = matchMedia('(max-width: 700px)'), linear = matchMedia(`(max-width: ${story.dataset.linear || 0}px)`);
+    let cur = -1, flat = false, pending = false;
+    // the line the eye rests on: middle of the screen below the nav, or of the space under the stage once it pins to the top
+    const mark = () => stacked.matches ? (wrap.getBoundingClientRect().bottom + innerHeight) / 2 : (72 + innerHeight) / 2;
+    // a step's middle; on wide screens the built-in steps are display:contents, so measure from their heading to their text
+    const centre = s => {
+      const r = s.getBoundingClientRect();
+      if (r.height) return (r.top + r.bottom) / 2;
+      const a = $('h3', s).getBoundingClientRect(), b = $('.step-r', s).getBoundingClientRect();
+      return (a.top + b.bottom) / 2;
+    };
+    const set = i => {
+      if (i === cur) return;
+      cur = i;
+      panels.forEach((p, j) => {
+        const was = p.classList.contains('on');
+        p.classList.toggle('on', j === i); p.classList.toggle('past', j < i); p.inert = j !== i;
+        if (j === i && !was) p.dispatchEvent(new Event('panel:on'));
+      });
+      decks.forEach(d => d.classList.toggle('on', +d.dataset.for === i));
+      steps.forEach((s, j) => s.classList.toggle('on', j === i));
+      pager.forEach((b, j) => b.setAttribute('aria-current', j === i));
+    };
+    const upd = () => {
+      pending = false;
+      if (linear.matches) {
+        if (!flat) { flat = true; cur = -1; story.classList.remove('live'); panels.forEach(p => { p.classList.add('on'); p.classList.remove('past'); p.inert = false; }); }
+        return;
+      }
+      if (flat) { flat = false; story.classList.add('live'); panels.forEach(p => p.classList.remove('on')); }
+      const m = mark();
+      let best = 0, d = Infinity;
+      steps.forEach((s, j) => { const dj = Math.abs(centre(s) - m); if (dj < d) { d = dj; best = j; } });
+      set(best);
+    };
+    pager.forEach((b, j) => b.addEventListener('click', () => scrollTo({ top: scrollY + centre(steps[j]) - mark() })));
+    story.classList.add('live');
+    addEventListener('scroll', () => { if (!pending) { pending = true; requestAnimationFrame(upd); } }, { passive: true });
+    addEventListener('resize', upd); upd();
+  });
+
+  /* timeline progress */
+  (function timeline() {
+    const tl = $('#tl'), items = $$('#tl > li');
+    let pending = false;
+    const upd = () => {
+      pending = false;
+      const r = tl.getBoundingClientRect(), mark = innerHeight * .6;
+      tl.style.setProperty('--p', Math.min(1, Math.max(0, (mark - r.top) / r.height)).toFixed(4));
+      items.forEach(li => li.classList.toggle('on', li.getBoundingClientRect().top + 12 < mark));
+    };
+    addEventListener('scroll', () => { if (!pending) { pending = true; requestAnimationFrame(upd); } }, { passive: true });
+    addEventListener('resize', upd); upd();
+  })();
+
+  /* booking: every "Book" button opens the form in a modal and submits it to Netlify Forms (or the form action, if one is set) */
+  (function booking() {
+    const dlg = $('#booking'), form = $('#bk-form', dlg), done = $('.bk-done', dlg), err = $('.bk-error', form), send = $('button[type=submit]', form);
+    $$('[data-book]').forEach(a => a.addEventListener('click', e => {
+      e.preventDefault();
+      form.hidden = false; done.hidden = true; err.hidden = true;
+      dlg.showModal();
+    }));
+    $$('[data-close]', dlg).forEach(b => b.addEventListener('click', () => dlg.close()));
+    // a click that lands on the dialog element itself, not its contents, is a click on the backdrop
+    dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      err.hidden = true; send.disabled = true;
+      try {
+        // an explicit action wins; otherwise a deployed Netlify site posts to itself, and a local preview sends nothing
+        const local = /^(localhost|127\.|\[::1\])/.test(location.hostname);
+        const endpoint = form.getAttribute('action') || ('netlify' in form.dataset && !local ? '/' : '');
+        if (endpoint) {
+          const res = await fetch(endpoint, { method: 'POST', body: new URLSearchParams(new FormData(form)),
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' } });
+          if (!res.ok) throw new Error(res.status);
+        } else console.warn('Booking form: local preview or no endpoint, so this request was not sent anywhere.');
+        $('.bk-email', done).textContent = form.elements.email.value;
+        form.reset(); form.hidden = true; done.hidden = false;
+      } catch { err.hidden = false; }
+      send.disabled = false;
+    });
+  })();
+
+  /* savings calculator */
+  (function calc() {
+    const des = $('#c-des'), eng = $('#c-eng'), pay = $('#c-pay'), inputs = [des, eng, pay];
+    const BACK = 40 * .5; // designers and UI engineers spend most of the week on UI; the system takes out about half
+    const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    const fill = el => el.style.setProperty('--fill', ((el.value - el.min) / (el.max - el.min) * 100) + '%');
+    const upd = () => {
+      const d = +des.value, e = +eng.value, s = +pay.value;
+      inputs.forEach(fill);
+      $('#o-des').textContent = `${d} designer${d === 1 ? '' : 's'}`;
+      $('#o-eng').textContent = `${e} engineer${e === 1 ? '' : 's'}`;
+      $('#o-pay').textContent = '$' + Math.round(s / 1000) + 'k';
+      // hours a week back; their share of a 40-hour week is the share of salary it's worth
+      const back = (d + e) * BACK, yearly = back / 40 * s;
+      $('#c-out').textContent = money.format(yearly);
+      const ppl = +(back / 40).toFixed(1);
+      $('#c-split').textContent = `About ${back} hours a week back, ${ppl === 1 ? '1 person’s' : `${ppl} people’s`} worth of time.`;
+      const days = 5000 / (yearly / 230);
+      let msg;
+      if (days < 1) msg = 'The sprint pays for itself in under a working day.';
+      else if (days <= 230) msg = `The sprint pays for itself in about ${Math.ceil(days)} working day${Math.ceil(days) === 1 ? '' : 's'}.`;
+      else msg = `The sprint pays for itself in about ${(days / 230).toFixed(1)} years.`;
+      $('#c-payback').textContent = msg;
+    };
+    inputs.forEach(el => el.addEventListener('input', upd));
+    upd();
+  })();
+
+  /* pixel texture behind pricing */
+  (function pixels() {
+    const cv = $('.pixels'), ctx = cv.getContext('2d');
+    if (!ctx) return;
+    const cell = 12;
+    let w = 0, h = 0, cols = 0, rows = 0, ink = '';
+    const size = () => {
+      const dpr = Math.min(2, devicePixelRatio || 1);
+      w = cv.clientWidth; h = cv.clientHeight;
+      cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cols = Math.ceil(w / cell); rows = Math.ceil(h / cell);
+      ink = css('--pix');
+    };
+    const draw = t => {
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = ink;
+      for (let j = 0; j < rows; j++) {
+        const fy = Math.pow(j / rows, 1.5);
+        ctx.globalAlpha = .18 + .72 * fy;
+        for (let i = 0; i < cols; i++) {
+          const v = .5 + .5 * Math.sin(i * .17 + Math.sin(j * .11 + t * .5) * 2.4 - t * 1.0) * Math.cos(j * .08 - t * .35 + i * .02);
+          const s = cell * Math.min(.86, .06 + .85 * v * fy + .06 * fy);
+          if (s < .9) continue;
+          ctx.fillRect(i * cell + (cell - s) / 2, j * cell + (cell - s) / 2, s, s);
+        }
+      }
+      ctx.globalAlpha = 1;
+    };
+    size();
+    let raf = 0, running = false; const t0 = performance.now();
+    const loop = now => { draw((now - t0) / 1000); if (running) raf = requestAnimationFrame(loop); };
+    const redraw = () => { size(); if (!running) draw(4); };
+    addEventListener('resize', redraw); onTheme.push(redraw);
+    draw(4);
+    if (reduce) return;
+    whenVisible(cv.parentElement, () => { if (!running) { running = true; raf = requestAnimationFrame(loop); } }, () => { running = false; cancelAnimationFrame(raf); });
+  })();
+})();
+</script>
