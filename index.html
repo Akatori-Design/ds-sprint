@@ -395,8 +395,8 @@ h3{font-weight:700;font-size:26px;line-height:1.1;letter-spacing:-.02em}
 /* A stage pinned in the centre while the chapters scroll past on both sides: headings on the left, explanations on the right.
    The chapter level with the stage stays bright and drives which panel the stage shows. */
 .story{--stage-h:min(560px,calc(100vh - 200px));--panel-w:420px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,560px) minmax(0,1fr);
-  grid-template-rows:repeat(3,minmax(84vh,auto));column-gap:clamp(24px,3vw,40px);overflow-x:clip}
-.story-stage{grid-column:2;grid-row:1 / span 3;min-width:0}
+  grid-template-rows:repeat(var(--n,3),minmax(84vh,auto));column-gap:clamp(24px,3vw,40px);overflow-x:clip}
+.story-stage{grid-column:2;grid-row:1 / span var(--n,3);min-width:0}
 .stage-wrap{position:sticky;top:calc(50vh + 36px - (var(--stage-h) + 52px) / 2)}
 .stage{position:relative;width:min(100%,var(--panel-w));height:var(--stage-h);margin-inline:auto}
 .panel{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;justify-content:center;padding:clamp(22px,2.4vw,30px);border-radius:var(--r-lg);overflow:hidden;
@@ -485,6 +485,38 @@ h3{font-weight:700;font-size:26px;line-height:1.1;letter-spacing:-.02em}
 .readout dd{margin:0;color:var(--ink)}
 .readout dd.flash{animation:flash var(--dur-4) var(--ease-enter)}
 @keyframes flash{from{color:var(--azure);transform:translateX(4px)}}
+
+/* component management: a Storybook window. On the panel's turn the sidebar fills in and the newest story gets its badge. */
+.sb{border-radius:var(--r-md);overflow:hidden;background:var(--fld);color:var(--ink);box-shadow:0 24px 40px -24px rgba(0,0,0,.35)}
+.sb-bar{display:flex;align-items:center;gap:6px;padding:11px 12px;border-bottom:1px solid var(--line-2);font:500 11px/1 var(--font-mono);color:var(--ink-3)}
+.sb-bar i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.sb-bar span{margin-left:8px}
+.sb-bar b{margin-left:auto;font-weight:500}
+.sb-body{display:grid;grid-template-columns:116px minmax(0,1fr)}
+.sb-tree{list-style:none;margin:0;padding:12px 8px;border-right:1px solid var(--line-2);display:grid;align-content:start;gap:2px;font:500 12px/1 var(--font-body)}
+.sb-tree li{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:8px;color:var(--ink-2)}
+.sb-tree li::before{content:"";width:8px;height:8px;flex:none;border-radius:2px;background:var(--line)}
+.sb-tree .sb-group{padding:4px 8px 8px;font:500 10px/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.sb-tree .sb-group::before{display:none}
+.sb-tree li.on{background:var(--sky);color:var(--on-sky)}
+.sb-tree li.on::before{background:var(--blue)}
+.sb-tree em{margin-left:auto;padding:3px 5px;border-radius:999px;background:var(--lime);color:var(--on-lime);font:500 9px/1 var(--font-mono);font-style:normal}
+.sb-canvas{display:flex;flex-direction:column;gap:14px;min-width:0;padding:14px}
+.sb-path{margin:0;font:500 11px/1 var(--font-mono);color:var(--ink-3)}
+.sb-stories{flex:1;display:flex;flex-wrap:wrap;align-content:center;gap:8px;padding:18px 14px;border:1px dashed var(--line);border-radius:var(--r-sm)}
+.sb-btn{display:inline-flex;align-items:center;height:32px;padding:0 13px;border-radius:999px;background:var(--blue);color:var(--on-blue);font:600 12px/1 var(--font-body)}
+.sb-btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.sb-btn.danger{background:var(--danger);color:#fff}
+.sb-btn.sm{height:26px;padding:0 10px;font-size:11px}
+.sb-ctl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:0;font:11px/1.3 var(--font-mono)}
+.sb-ctl dt{color:var(--ink-3)}
+.sb-ctl dd{margin:0}
+@media (prefers-reduced-motion:no-preference){
+  .panel.on .sb-tree li{animation:sb-in var(--dur-3) var(--ease-enter) both;animation-delay:calc(var(--i,0) * 60ms)}
+  .panel.on .sb-tree em{animation:sb-in var(--dur-3) var(--ease-spring) .6s both}
+}
+@keyframes sb-in{from{opacity:0;transform:translateX(-8px)}}
+@media (max-width:700px){.sb-ctl{display:none}}
 
 .spec{display:grid;gap:28px}
 .spec-type{list-style:none;margin:0;padding:0;display:grid;gap:8px}
@@ -968,7 +1000,7 @@ html:has(.booking[open]){overflow:hidden}
         <header class="sec-head reveal">
           <h2>What you’ll automate</h2>
         </header>
-        <div class="story" id="story">
+        <div class="story" id="story" style="--n:4">
           <div class="story-stage">
             <div class="stage-wrap">
               <div class="stage">
@@ -1026,17 +1058,43 @@ html:has(.booking[open]){overflow:hidden}
                     <div class="ease-row"><code>ease.linear</code><div class="track"><div class="run" style="--e:linear"></div></div></div>
                   </div>
                 </div>
+
+                <div class="panel fill-lime" role="group" aria-label="Storybook component library">
+                  <div class="sb surface" aria-label="Example Storybook">
+                    <div class="sb-bar"><i></i><i></i><i></i><span>storybook</span><b>24 stories</b></div>
+                    <div class="sb-body">
+                      <ul class="sb-tree">
+                        <li class="sb-group">Components</li>
+                        <li class="on" style="--i:1">Button</li>
+                        <li style="--i:2">Input</li>
+                        <li style="--i:3">Select</li>
+                        <li style="--i:4">Card</li>
+                        <li style="--i:5">Dialog</li>
+                        <li style="--i:6">Tabs</li>
+                        <li style="--i:7">Toast<em>new</em></li>
+                      </ul>
+                      <div class="sb-canvas">
+                        <p class="sb-path">Components / Button</p>
+                        <div class="sb-stories">
+                          <span class="sb-btn">Primary</span><span class="sb-btn ghost">Secondary</span><span class="sb-btn danger">Delete</span><span class="sb-btn sm">Small</span>
+                        </div>
+                        <dl class="sb-ctl"><dt>variant</dt><dd>primary</dd><dt>size</dt><dd>md</dd><dt>disabled</dt><dd>false</dd></dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div class="pager" aria-label="Chapters">
                 <button type="button" aria-current="true">Theming</button>
                 <button type="button" aria-current="false">Brand</button>
                 <button type="button" aria-current="false">Motion</button>
+                <button type="button" aria-current="false">Components</button>
               </div>
             </div>
           </div>
 
           <div class="step" style="--row:1">
-            <div class="step-l"><p class="step-n">01 / 03</p><h3>Flexible theming</h3></div>
+            <div class="step-l"><p class="step-n">01 / 04</p><h3>Flexible theming</h3></div>
             <div class="step-r">
               <p>Change your brand, add a client theme or ship dark mode by switching tokens. The components stay untouched.</p>
               <p>Pick a swatch on the card to switch themes.</p>
@@ -1044,18 +1102,26 @@ html:has(.booking[open]){overflow:hidden}
             </div>
           </div>
           <div class="step" style="--row:2">
-            <div class="step-l"><p class="step-n">02 / 03</p><h3>Consistent brand visuals</h3></div>
+            <div class="step-l"><p class="step-n">02 / 04</p><h3>Consistent brand visuals</h3></div>
             <div class="step-r">
               <p>Color, type, spacing, radius and shadow follow one set of rules. Every screen looks like the same product, whoever built it.</p>
               <ul class="chips"><li>type.scale</li><li>space.scale</li><li>radius</li></ul>
             </div>
           </div>
           <div class="step" style="--row:3">
-            <div class="step-l"><p class="step-n">03 / 03</p><h3>Motion integration</h3></div>
+            <div class="step-l"><p class="step-n">03 / 04</p><h3>Motion integration</h3></div>
             <div class="step-r">
               <p>Easing and duration live in tokens. Drawers slide from their edge, menus grow from their trigger, buttons press down.</p>
               <p>Spring is kept for small tactile feedback: a press settling, a toggle thumb.</p>
               <ul class="chips"><li>ease.*</li><li>duration.*</li></ul>
+            </div>
+          </div>
+          <div class="step" style="--row:4">
+            <div class="step-l"><p class="step-n">04 / 04</p><h3>UI component management</h3></div>
+            <div class="step-r">
+              <p>Every component is managed in Storybook, with its variants, states and props documented in one place.</p>
+              <p>New components land there as they're built, so designers, engineers and AI agents all work from the same library.</p>
+              <ul class="chips"><li>Storybook</li><li>stories</li><li>controls</li></ul>
             </div>
           </div>
         </div>
